@@ -17,17 +17,17 @@ import flask.ext.login
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
-#login_manager.login_view = 'login'
 
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
 app.logger.setLevel(logging.ERROR)
 
-user_database = {'MarderUser': 'crabs',
+user_pdatabase = {'MarderUser': 'crabs',
 		'Admin': 'admin'}
 		
+user_database = {'MarderUser': ('marder_email', 'marder_phone')}
 		
-class User(UserMixin):
-
+		
+class User(UserMixin):	
 	pass
 
 
@@ -38,34 +38,24 @@ class LoginForm(Form):
 
 @login_manager.user_loader
 def load_user(user_id):
-	if user_id not in user_database:
+	print('hello from user_loader!')
+	if user_id not in user_pdatabase:
 		return		
 	user=User()
 	user.id = user_id
-	return user
-	
-	
-@login_manager.request_loader
-def request_loader(request):
-	user_id = request.form.get('username')
-	if user_id not in user_database:
-		return		
-	user = User()
-	user.id = user_id
-	user.is_authenticated = request.form.get('password') == user_database[user_id]	
+	user.email = user_database[user_id][0]
+	user.phone = user_database[user_id][1]
 	return user
 	
 
 @app.route('/login', methods=['post'])
 def login():
-	print('login called')
 	form = LoginForm(request.form)
-	print('form exists')
 	if form.validate():
 		user=load_user(form.username.data)
 		if user == None:
 			return render_template('/unauthorized-page.html')		
-		if form.password.data == user_database[user.id]:
+		if form.password.data == user_pdatabase[user.id]:
 			flask.ext.login.login_user(user)
 			return redirect(url_for('index'))		
 	return render_template('/unauthorized-page.html')
