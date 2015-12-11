@@ -1,0 +1,1 @@
+{"Admin": ["admin_email", "admin_surname", "admin_lab"], "MarderUser": ["marder_email", "marder_surname", "Marder"], "Dumbface": ["stupid@me.com", "Stupidhead", "DumbPI"]}
