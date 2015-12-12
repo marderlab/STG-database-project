@@ -10,10 +10,12 @@
   {% if current_user.is_authenticated %}
   	<h3>You are currently signed in as {{ current_user.id }}</h3>
   	<h3>Your email is {{ current_user.email }} and your lab is {{ current_user.lab }}</h3>
+  	<p><a href="{{ url_for('edit_user') }}">Edit user info</a></p>   	
   	<p><a href="{{ url_for('sign_out') }}">Sign out</a></p> 
   {% else %} 
     <h3>You are not signed in.</h3>
-    <p><a href="{{ url_for('sign_in') }}">Sign in</a></p>  
+    <p><a href="{{ url_for('sign_in') }}">Sign in</a></p> 
+     
     <p><a href="{{ url_for('new_user') }}">Create new user</a></p>
   {% endif %}
     <body>

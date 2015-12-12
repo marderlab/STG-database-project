@@ -1,0 +1,1 @@
+{"MaxUsers": 100, "MaxFilesizeMB": 1000, "MaxUserExperiments" : 500}

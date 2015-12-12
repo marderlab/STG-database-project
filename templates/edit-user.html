@@ -1,0 +1,26 @@
+
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Pyloric Data Warehouse</title>
+</head>
+<div class=page>
+  <h3>Enter new information below:</h3>
+  <form method="post" action="/edit-user"> 
+    <h4>Info for {{ current_user.id }}</h4>   
+    <div>{{ form.email.label }}: {{ form.email(class="css_class") }}</div>
+      {% for error in form.email.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.surname.label }}: {{ form.surname(class="css_class") }}</div>
+      {% for error in form.surname.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.lab.label }}: {{ form.lab(class="css_class") }}</div>
+      {% for error in form.lab.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}                
+    <p><input type=submit value=Submit>
+  </form>
+  <p><a href="{{ url_for('index') }}">Nevermind, Back to Home</a></p>    
+</div>

@@ -1,1 +1,1 @@
-{"Admin": ["admin_email", "admin_surname", "admin_lab"], "MarderUser": ["marder_email", "marder_surname", "Marder"], "Dumbface": ["stupid@me.com", "Stupidhead", "DumbPI"]}
+{"totalidiot": ["idiot@idiots.com", "idiot", "idiot's PI"], "Admin": ["admin_email", "admin_surname", "admin_lab"], "dumbuser": ["dumbuser@dumbdomain.dumb", "dumb", "dumbpi"], "MarderUser": ["marder_user@brandeis.edu", "marder_surname", "Marder"], "Bob-O": ["bobloves@bobos.com", "Bob-O!!", "Bob_o_lab_o_rama"], "stupiduser": ["stupid@stupiddomain.stupid", "stupid", "stupid's PI"]}

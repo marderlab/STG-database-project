@@ -16,6 +16,7 @@ import logging
 import hashlib
 import flask.ext.login
 import simplejson as json
+import pandas as pd
 
 
 app = Flask(__name__)
@@ -30,27 +31,28 @@ app.logger.setLevel(logging.ERROR)
 with open('user_pdatabase.txt') as json_data:
 	user_pdatabase = json.load(json_data)
 	json_data.close()
-		
+
 
 with open('user_database.txt') as json_data:
 	user_database = json.load(json_data)
 	json_data.close()
-				
-		
-class User(UserMixin):	
+	
+	
+with open('config.txt') as json_data:
+	config = json.load(json_data)
+	json_data.close()
+
+
+class User(UserMixin):
 	pass
 
 
 class LoginForm(Form):
 	username = fields.TextField('Username')
 	password = fields.PasswordField('Password')
-
-
-class UserForm(Form):
-	username = fields.TextField('Username', [
-		validators.Length(max=20, message='Under 20 characters please!'),
-		validators.InputRequired(message='Username is required')
-		])
+	
+	
+class EditUserForm(Form):
 	email = fields.TextField('email', [
 		validators.Email(message='Not an email address.')
 		])
@@ -62,7 +64,14 @@ class UserForm(Form):
 		validators.Length(max=20, message='20 characters max'),
 		validators.InputRequired(message='Lab PI surname required')
 		])
-	
+		
+
+class UserForm(EditUserForm):
+	username = fields.TextField('Username', [
+		validators.Length(max=20, message='Under 20 characters please!'),
+		validators.InputRequired(message='Username is required')
+		])
+
 
 class NewUserForm(UserForm):
 	password = fields.PasswordField('Password', [
@@ -71,15 +80,29 @@ class NewUserForm(UserForm):
 	])
 	confirm = fields.PasswordField('Password')
 	
+	
+class AdminActionForm(Form):
+	username = fields.TextField('Username', [
+		validators.AnyOf(user_database.keys())])
+	action = fields.SelectField('Action', choices = [
+		('edit', 'Edit User'), ('delete', 'Delete User')])
+		
+
+def MakeDF(data, column_names):
+	print(data.values())
+	df = pd.DataFrame(data.values(), columns = column_names)
+	df.index = user_database.keys()	
+	return df
+	
 
 @login_manager.user_loader
 def load_user(user_id):
-	if user_id not in user_pdatabase:
-		return		
-	user=User()
+	if user_id not in user_database:
+		return
+	user = User()
 	user.id = user_id
 	user.email = user_database[user_id][0]
-	user.surname = user_database[user_id][1]	
+	user.surname = user_database[user_id][1]
 	user.lab = user_database[user_id][2]
 	g.user = user
 	return user
@@ -95,7 +118,7 @@ def login():
 	form = LoginForm(request.form)
 	if form.validate():
 		user = load_user(form.username.data)
-		if user == None:
+		if user is None:
 			return render_template('/unauthorized-page.html')
 		if hashlib.sha256(form.data['password']).hexdigest() \
 				== user_pdatabase[user.id]:
@@ -108,44 +131,100 @@ def login():
 def download_page():
 	return render_template('download-page.html')
 
-	
+
 @app.route('/upload-page')
 @login_required
 def upload_page():
 	return render_template('upload-page.html')
-	
-	
+
+
 @app.route('/new-user', methods=['GET', 'POST'])
 def new_user():
 	if request.method == 'GET':
 		# get new user information, then come back as a post
+		if len(user_database) > (config['MaxUsers']-1):
+			return render_template('too-many-users.html')
 		form = NewUserForm()
 		return render_template('new-user.html', form=form)
 	else:
 		# create the user with validated user information
 		form = NewUserForm(request.form)
 		if form.validate():
+			if form.data['username'] in user_database.keys():
+				return render_template('username-collision.html')
 			user_database[form.data['username']] = \
-				(form.data['email'], form.data['surname'],
-				form.data['lab'])
+				[form.data['email'], form.data['surname'],
+				form.data['lab']]
 			user_pdatabase[form.data['username']] = \
 				(hashlib.sha256(form.data['password']).hexdigest())
 			with open('user_database.txt', 'w') as outfile:
 				json.dump(user_database, outfile)
 			with open('user_pdatabase.txt', 'w') as outfile:
 				json.dump(user_pdatabase, outfile)
-			return redirect(url_for('sign_in'))
+			user = load_user(form.data['username'])
+			flask.ext.login.login_user(user)
+			return redirect(url_for('index'))
 		else:
 			return render_template('new-user.html', form=form)
 
 
-@app.route('/admin-page')
+@app.route('/edit-user', methods=['GET', 'POST'])
+@login_required
+def edit_user():
+	if request.method == 'GET':
+		# get old user information, then come back as a post
+		print(g.user.id)
+		form = EditUserForm(surname=user_database[g.user.id][1], \
+			email=user_database[g.user.id][0], \
+			lab=user_database[g.user.id][2])
+		return render_template('edit-user.html', form=form)
+	else:
+		# create the user with validated user information
+		form = EditUserForm(request.form)
+		if form.validate():
+			user_database[g.user.id] = \
+				[form.data['email'], form.data['surname'],
+				form.data['lab']]
+			with open('user_database.txt', 'w') as outfile:
+				json.dump(user_database, outfile)
+			return redirect(url_for('index'))
+		else:
+			return render_template('edit-user.html', form=form)
+			
+
+@app.route('/admin-page', methods=['GET', 'POST'])
 @login_required
 def admin_page():
-	if g.user.id == "Admin":
-		return render_template('admin-page.html')
-	else:
+	if g.user.id != "Admin":
 		return redirect(url_for('index'))
+	if request.method == "GET":
+		users_df = MakeDF(user_database, ['Email', 'Surname', 'Lab'])
+		table_html = users_df.to_html()
+		form = AdminActionForm()
+		return render_template('admin-page.html', table_html=table_html, \
+			form=form)
+	else:
+		form = AdminActionForm(request.form)		
+		if not form.validate():
+			users_df = MakeDF(user_database, ['Email', 'Surname', 'Lab'])
+			table_html = users_df.to_html()
+			return render_template('admin-page.html', \
+				table_html=table_html, form=form)
+		if form.data['action'] == 'delete':
+			if form.data['username'] == "Admin":
+				msg = 'You cannot delete Admin, Admin.'
+			elif form.data['username'] not in user_database.keys():
+				msg = 'User not found'
+			else:
+				user_database.pop(form.data['username'])
+				user_pdatabase.pop(form.data['username'])
+				with open('user_database.txt', 'w') as outfile:
+					json.dump(user_database, outfile)
+				with open('user_pdatabase.txt', 'w') as outfile:
+					json.dump(user_pdatabase, outfile)
+				msg = 'User ' + form.data['username'] + ' deleted.'
+			return render_template('delete-user.html', msg=msg)
+		return redirect(url_for('new_user'))
 
 
 @app.route('/')
@@ -167,5 +246,5 @@ def sign_out():
 
 if __name__ == '__main__':
 	app.config["SECRET_KEY"] = "ITSASECRET"
-	port = int(os.environ.get("PORT", 5000))	
+	port = int(os.environ.get("PORT", 5000))
 	app.run(host='0.0.0.0', port=port, debug=True)
