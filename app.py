@@ -2,7 +2,7 @@
 """
 Created on Tue Dec  8 14:02:36 2015
 
-Pyloric Database Web Server
+STG Database Web Server
 
 @author: alhamood
 """
@@ -32,7 +32,6 @@ global cond_name_global
 
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
 app.logger.setLevel(logging.ERROR)
-
 
 with open('user_pdatabase.json') as json_data:
 	user_pdatabase = json.load(json_data)
