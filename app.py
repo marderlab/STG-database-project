@@ -7,7 +7,7 @@ STG Database Web Server
 @author: alhamood
 """
 
-from flask import Flask, render_template, request, redirect, url_for, g
+from flask import Flask, render_template, request, redirect, url_for, g, make_response
 from flask.ext.login import LoginManager, UserMixin, login_required
 from wtforms import Form, validators, fields
 import os
@@ -208,12 +208,30 @@ def MakeDF(data, column_names):
 	return df
 
 
-def MakeMetaDF(data, column_names):
+def MakeMetaDF(data):
+	column_names = ['User', 'Exp ID', 'Exp Date',
+			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species',
+			'Saline', 'Conditions']
 	df = pd.DataFrame(data.values(), columns = column_names)
 	df = df.sort_values(by='Exp Date')
 	df.index = range(len(df)) 
 	return df
 	
+
+def MakeCondDF(data):
+	column_names = ['cond_name','pyl_hz',
+				'pyl_cycvar','pyl_niqr','gas_hz',
+				'gas_cycvar','gas_niqr','pd_off',
+				'pd_spikes','lp_on','lp_off',
+				'lp_spikes','py_on','py_off',
+				'py_spikes','vd_on','vd_off',
+				'vd_spikes','lg_off','lg_spikes',
+				'dg_on','dg_off','dg_spikes','gm_on','gm_off','gm_spikes',
+				'mg_on','mg_off','mg_spikes']
+	df = pd.DataFrame(proc_data.values(), columns=column_names, index=proc_data.keys())
+	df = df.sort_index()
+	return df
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -249,11 +267,45 @@ def login():
 	return render_template('/unauthorized-page.html')
 
 
-@app.route('/download-page', methods=['GET', 'POST'])
+@app.route('/download-page')
 def download_page():
 	if config['DownloadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	return render_template('download-page.html')
+	
+	
+@app.route('/dl-metadata-page')
+def dl_metadata_page():
+	if config['DownloadsAllowed'] != 1:
+		return render_template('feature-disabled.html')
+	metadata_df = MakeMetaDF(metadata)
+	table_html = metadata_df.to_html()
+	return render_template('dl-metadata-page.html', table_html=table_html)
+
+
+@app.route('/dl-metadata-csv')
+def dl_metadata_csv():
+	metadata_df = MakeMetaDF(metadata)
+	response = make_response(metadata_df.to_csv(index=False))
+	response.headers['Content-Disposition'] = 'attachment; filename=metadata.csv'
+	return response
+	
+	
+@app.route('/dl-procdata-page')
+def dl_procdata_page():
+	if config['DownloadsAllowed'] != 1:
+		return render_template('feature-disabled.html')
+	procdata_df = MakeCondDF(proc_data)
+	table_html = procdata_df.to_html()
+	return render_template('dl-procdata-page.html', table_html=table_html)
+	
+	
+@app.route('/dc-procdata-csv')
+def dl_procdata_csv():
+	procdata_df = MakeCondDF(proc_data)
+	response = make_response(procdata_df.to_csv(index_label='cond_ID'))
+	response.headers['Content-Disposition'] = 'attachment; filename=procdata.csv'
+	return response
 
 
 @app.route('/upload-page', methods=['GET', 'POST'])
@@ -263,9 +315,7 @@ def upload_page():
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
-		metadata_df=MakeMetaDF(metadata, ['User', 'Exp ID', 'Exp Date',
-			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species',
-			'Saline', 'Conditions'])
+		metadata_df=MakeMetaDF(metadata)
 		if g.user.id != 'Admin':
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]
 		table_html = metadata_df.to_html()
@@ -273,8 +323,7 @@ def upload_page():
 		return render_template('upload-page.html', table_html=table_html, form=form)
 	else:
 		form = UploadActionForm(request.form)
-		metadata_df=MakeMetaDF(metadata, ['User', 'Exp ID', 'Exp Date',
-			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species', 'Saline', 'Conditions'])
+		metadata_df=MakeMetaDF(metadata)
 		if g.user.id != 'Admin':
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]	
 		if form.validate():
@@ -298,16 +347,7 @@ def experiment_page():
 	global cond_num_global
 	global cond_name_global
 	if request.method == 'GET':
-		columns =  ['cond_name','pyl_hz',
-				'pyl_cycvar','pyl_niqr','gas_hz',
-				'gas_cycvar','gas_niqr','pd_off',
-				'pd_spikes','lp_on','lp_off',
-				'lp_spikes','py_on','py_off',
-				'py_spikes','vd_on','vd_off',
-				'vd_spikes','lg_off','lg_spikes',
-				'dg_on','dg_off','dg_spikes','gm_on','gm_off','gm_spikes',
-				'mg_on','mg_off','mg_spikes']
-		conditions_df = pd.DataFrame(proc_data.values(), columns=columns, index=proc_data.keys())
+		conditions_df = MakeCondDF(proc_data)
 		conditions_df = conditions_df[conditions_df.index.str.contains(exp_name_global)]
 		conditions_df = conditions_df.sort_index()
 		conditions_df.index = range(len(conditions_df))

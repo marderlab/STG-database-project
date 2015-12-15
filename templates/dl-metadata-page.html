@@ -1,0 +1,16 @@
+
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>STG Data Warehouse</title>
+</head>
+<div class=page>
+  <h4>Here is the table of all experiment metadata (notes not shown), by experiment and condition:</h4>
+  {{table_html | safe}}
+  
+  <body>
+    <p><a href="{{ url_for('dl_metadata_csv') }}">Download as .csv file (also includes descriptive notes)</a></p>  
+    <p><a href="{{ url_for('download_page') }}">Back to download page</a></p>
+  </body>
+    
+</div>
