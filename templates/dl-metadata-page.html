@@ -9,7 +9,9 @@
   {{table_html | safe}}
   
   <body>
-    <p><a href="{{ url_for('dl_metadata_csv') }}">Download as .csv file (also includes descriptive notes)</a></p>  
+    <p><a href="{{ url_for('dl_metadata_json') }}">Download as .json file</a></p> 
+    <p><a href="{{ url_for('dl_metadata_csv') }}">Download as .csv file</a></p> 
+    <p><a href="{{ url_for('dl_metadata_csv_nonotes') }}">Download as .csv file without notes</a></p>     
     <p><a href="{{ url_for('download_page') }}">Back to download page</a></p>
   </body>
     

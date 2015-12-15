@@ -10,10 +10,10 @@ STG Database Web Server
 from flask import Flask, render_template, request, redirect, url_for, g, make_response
 from flask.ext.login import LoginManager, UserMixin, login_required
 from wtforms import Form, validators, fields
+from werkzeug import secure_filename
 import os
 import sys
 import random
-import time
 import string
 import logging
 import hashlib
@@ -50,11 +50,6 @@ with open('config.json') as json_data:
 	
 with open('metadata.json') as json_data:
 	metadata = json.load(json_data)
-	json_data.close()
-	
-	
-with open('notes.json') as json_data:
-	notes = json.load(json_data)
 	json_data.close()
 	
 	
@@ -127,8 +122,8 @@ class UploadActionForm(Form):
 	identifier = fields.IntegerField('Experiment index (number in left column)', [
 		validators.Optional()])
 	action = fields.SelectField('Action', choices=[
-		('editM', 'Edit Metadata (what you see here)'),
-		('editP', 'Edit Processed Data (such as frequency) and Conditions'),
+		('editP', 'Edit / Upload Data (conditions and files)'),
+		('editM', 'Edit Metadata'),		
 		('delete', 'Delete Experiment')])
 		
 		
@@ -136,7 +131,7 @@ class ExperimentActionForm(Form):
 	identifier = fields.IntegerField('Condition index (number in left column)', [
 		validators.Optional()])
 	action = fields.SelectField('Action', choices=[
-		('edit', 'Edit Processed Data for this Condition'),
+		('edit', 'Edit Condition Data'),
 		('delete', 'Delete Condition')])
 		
 
@@ -211,10 +206,9 @@ def MakeDF(data, column_names):
 def MakeMetaDF(data):
 	column_names = ['User', 'Exp ID', 'Exp Date',
 			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species',
-			'Saline', 'Conditions']
-	df = pd.DataFrame(data.values(), columns = column_names)
+			'Saline', 'Conditions', 'Files', 'Notes']
+	df = pd.DataFrame(data.values(), columns = column_names, index=data.keys())
 	df = df.sort_values(by='Exp Date')
-	df.index = range(len(df)) 
 	return df
 	
 
@@ -231,6 +225,11 @@ def MakeCondDF(data):
 	df = pd.DataFrame(proc_data.values(), columns=column_names, index=proc_data.keys())
 	df = df.sort_index()
 	return df
+	
+	
+def allowed_file(filename):
+	allowed_exts = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'abf', 's2r'])
+	return '.' in filename and filename.rsplit('.', 1)[1] in allowed_exts
 
 
 @login_manager.user_loader
@@ -283,11 +282,28 @@ def dl_metadata_page():
 	return render_template('dl-metadata-page.html', table_html=table_html)
 
 
+@app.route('/dl-metadata-json')
+def dl_metadata_json():
+	metadata_df = MakeMetaDF(metadata)
+	response = make_response(metadata_df.to_json())
+	response.headers['Content-Disposition'] = 'attachment; filename=metadata.json'
+	return response
+
+
 @app.route('/dl-metadata-csv')
 def dl_metadata_csv():
 	metadata_df = MakeMetaDF(metadata)
 	response = make_response(metadata_df.to_csv(index=False))
 	response.headers['Content-Disposition'] = 'attachment; filename=metadata.csv'
+	return response
+
+
+@app.route('/dl-metadata-csv-nonotes')
+def dl_metadata_csv_nonotes():
+	metadata_df = MakeMetaDF(metadata)
+	metadata_df = metadata_df.drop('Notes', axis=1)
+	response = make_response(metadata_df.to_csv(index=False))
+	response.headers['Content-Disposition'] = 'attachment; filename=metadata_nonotes.csv'
 	return response
 	
 	
@@ -306,6 +322,14 @@ def dl_procdata_csv():
 	response = make_response(procdata_df.to_csv(index_label='cond_ID'))
 	response.headers['Content-Disposition'] = 'attachment; filename=procdata.csv'
 	return response
+	
+	
+@app.route('/dc-procdata-json')
+def dl_procdata_json():
+	procdata_df = MakeCondDF(proc_data)
+	response = make_response(procdata_df.to_json())
+	response.headers['Content-Disposition'] = 'attachment; filename=procdata.json'
+	return response	
 
 
 @app.route('/upload-page', methods=['GET', 'POST'])
@@ -316,14 +340,17 @@ def upload_page():
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
 		metadata_df=MakeMetaDF(metadata)
+		metadata_df.index = range(len(metadata_df)) 
 		if g.user.id != 'Admin':
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]
-		table_html = metadata_df.to_html()
+		df_no_notes = metadata_df.drop('Notes', axis=1)
+		table_html = df_no_notes.to_html()
 		form = UploadActionForm()
 		return render_template('upload-page.html', table_html=table_html, form=form)
 	else:
 		form = UploadActionForm(request.form)
 		metadata_df=MakeMetaDF(metadata)
+		metadata_df.index = range(len(metadata_df)) 
 		if g.user.id != 'Admin':
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]	
 		if form.validate():
@@ -380,17 +407,37 @@ def experiment_page():
 				msg='Condition '+cond_name_global+' deleted.'
 				return render_template('experiment-message.html', msg=msg)
 					
-			
+
+# TOTALLY NAIVE UPLOAD CODE HERE! It works but just dumps everything into root.
+@app.route('/file-upload', methods=['GET', 'POST'])
+@login_required
+def file_upload():
+	if config['UploadsAllowed'] != 1:
+		return render_template('feature-disabled.html')
+	if request.method == 'GET':
+		return render_template('file-upload-page.html')
+	file = request.files['file']
+	if file and allowed_file(file.filename):
+		filename = secure_filename(file.filename)
+		#os.chdir('./templates')
+		file.save('templates/'+filename)
+		msg = 'Successfully uploaded '+filename
+		return render_template('file-upload-message.html', msg=msg)
+	else:
+		msg = 'Upload failed. Filetype is probably not allowed.'
+		return render_template('file-upload-message.html', msg=msg)		
+
+
 @app.route('/new-condition', methods=['GET', 'POST'])
 @login_required
 def new_condition():
 	global exp_name_global
 	global cond_name_global
 	global cond_num_global
-	if request.method == "GET":
+	if request.method == 'GET':
 		form = NewConditionForm()
 		return render_template('new-condition.html', form=form, name=exp_name_global)
-	if request.method == "POST":
+	if request.method == 'POST':
 		form = NewConditionForm(request.form)
 		if form.validate():
 			cond_num_global = str(metadata[exp_name_global][9])
@@ -417,14 +464,11 @@ def delete_experiment():
 	else:
 		form = DeleteForm(request.form)
 		if form.data['verify'] == 'DELETE':
-			notes.pop(exp_name_global)
 			for condnum in range(metadata[exp_name_global][9]):
 				proc_data.pop(exp_name_global+str(condnum))
 			metadata.pop(exp_name_global)	
 			with open('metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
-			with open('notes.json', 'w') as outfile:
-				json.dump(notes, outfile)
 			with open('processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)			
 			msg='Deleted experiment '+exp_name_global
@@ -455,14 +499,11 @@ def new_experiment():
 				g.user.id, form.data['exp_id'], str(form.data['exp_date']),
 				str(form.data['animal_date']), form.data['experimenter'],
 				form.data['lab'], form.data['temp'], form.data['species'],
-				form.data['saline'], 1]
-			notes[g.user.id+':'+form.data['exp_id']] = form.data['notes']
+				form.data['saline'], 1, 0, form.data['notes']]
 			proc_data[g.user.id+':'+form.data['exp_id']+'0'] = [None]*29
 			proc_data[g.user.id+':'+form.data['exp_id']+'0'][0]='baseline'
 			with open('metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
-			with open('notes.json', 'w') as outfile:
-				json.dump(notes, outfile)
 			with open('processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
 			cond_num_global = '0'
@@ -480,7 +521,7 @@ def edit_metadata():
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
 		data = metadata[exp_name_global]
-		form = MetadataForm(experimenter=data[4], notes=notes[exp_name_global],
+		form = MetadataForm(experimenter=data[4], notes=data[11],
 			lab=data[5], temp=data[6], species=data[7], saline=data[8])
 		return render_template('edit-metadata.html', form=form, name=exp_name_global, oldexpdate=data[2], oldandate=data[3])
 	else:
@@ -493,11 +534,9 @@ def edit_metadata():
 			metadata[exp_name_global][6] = form.data['temp']
 			metadata[exp_name_global][7] = form.data['species']
 			metadata[exp_name_global][8] = form.data['saline']
-			notes[exp_name_global] = form.data['notes']
+			metadata[exp_name_global][11] = form.data['notes']
 			with open('metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
-			with open('notes.json', 'w') as outfile:
-				json.dump(notes, outfile)
 			return redirect(url_for('upload_page'))
 		else:
 			return render_template('edit-metadata.html', name=exp_name_global, form=form)
