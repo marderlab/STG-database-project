@@ -5,8 +5,9 @@
   <title>Pyloric Data Warehouse</title>
 </head>
 <div class=page>
-  <h3>Enter any available processed data for this experiment, {{name}}</h3>
-  <form method="post" action="/processed-data"> 
+  <h3>Enter any available processed data for the experiment {{name}}</h3>
+  <h3>Condition = {{cond}}</h3>
+    <form method="post" action="/processed-data"> 
     <div>{{ form.pyl_hz.label }}: {{ form.pyl_hz(class="css_class") }}</div>
       {% for error in form.pyl_hz.errors %}
         <span style="color: red;">[{{ error }}]</span>

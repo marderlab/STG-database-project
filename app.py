@@ -27,6 +27,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 global editusername_global
 global exp_name_global
+global cond_num_global
+global cond_name_global
 
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
 app.logger.setLevel(logging.ERROR)
@@ -127,9 +129,23 @@ class UploadActionForm(Form):
 		validators.Optional()])
 	action = fields.SelectField('Action', choices=[
 		('editM', 'Edit Metadata (what you see here)'),
-		('editP', 'Edit Processed Data (such as frequency)'),
+		('editP', 'Edit Processed Data (such as frequency) and Conditions'),
 		('delete', 'Delete Experiment')])
 		
+		
+class ExperimentActionForm(Form):
+	identifier = fields.IntegerField('Condition index (number in left column)', [
+		validators.Optional()])
+	action = fields.SelectField('Action', choices=[
+		('edit', 'Edit Processed Data for this Condition'),
+		('delete', 'Delete Condition')])
+		
+
+class NewConditionForm(Form):
+	name = fields.TextField('Condition Name', [
+		validators.length(min=2, max=15, message='2-15 characters'),
+		validators.InputRequired(message='Must enter a condition name')])
+
 		
 class MetadataForm(Form):
 	exp_date = fields.DateField('Experiment Date',  [
@@ -249,7 +265,8 @@ def upload_page():
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
 		metadata_df=MakeMetaDF(metadata, ['User', 'Exp ID', 'Exp Date',
-			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species', 'Saline'])
+			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species',
+			'Saline', 'Conditions'])
 		if g.user.id != 'Admin':
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]
 		table_html = metadata_df.to_html()
@@ -258,20 +275,95 @@ def upload_page():
 	else:
 		form = UploadActionForm(request.form)
 		metadata_df=MakeMetaDF(metadata, ['User', 'Exp ID', 'Exp Date',
-			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species', 'Saline'])
+			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species', 'Saline', 'Conditions'])
 		if g.user.id != 'Admin':
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]	
 		if form.validate():
-			print(form.data['identifier'])
 			if form.data['identifier']<0 or form.data['identifier']>(len(metadata_df)-1) or form.data['identifier']==None:
 				return render_template('upload-message.html', msg='Invalid identifier')
 			exp_name_global = metadata_df.loc[form.data['identifier'], 'User']+':'+metadata_df.loc[form.data['identifier'], 'Exp ID']	
 			if form.data['action'] == 'editP':
-				return redirect(url_for('processed_data'))
+				return redirect(url_for('experiment_page'))
 			if form.data['action'] == 'editM':
 				return redirect(url_for('edit_metadata'))
 			if form.data['action'] == 'delete':
 				return redirect(url_for('delete_experiment'))
+				
+				
+@app.route('/experiment-page', methods=['GET', 'POST'])
+@login_required
+def experiment_page():
+	if config['UploadsAllowed'] != 1:
+		return render_template('feature-disabled.html')
+	global exp_name_global
+	global cond_num_global
+	global cond_name_global
+	if request.method == 'GET':
+		columns =  ['cond_name','pyl_hz',
+				'pyl_cycvar','pyl_niqr','gas_hz',
+				'gas_cycvar','gas_niqr','pd_off',
+				'pd_spikes','lp_on','lp_off',
+				'lp_spikes','py_on','py_off',
+				'py_spikes','vd_on','vd_off',
+				'vd_spikes','lg_off','lg_spikes',
+				'dg_on','dg_off','dg_spikes','gm_on','gm_off','gm_spikes',
+				'mg_on','mg_off','mg_spikes']
+		conditions_df = pd.DataFrame(proc_data.values(), columns=columns, index=proc_data.keys())
+		conditions_df = conditions_df[conditions_df.index.str.contains(exp_name_global)]
+		conditions_df = conditions_df.sort_index()
+		conditions_df.index = range(len(conditions_df))
+		table_html = conditions_df.to_html()
+		form = ExperimentActionForm()
+		return render_template('experiment-page.html', table_html=table_html, form=form)
+	if request.method == 'POST':
+		form= ExperimentActionForm(request.form)
+		if form.validate():
+			if form.data['identifier']<0 or form.data['identifier']>metadata[exp_name_global][9]:
+				return render_template('upload-message.html', msg='Invalid identifier')
+			if form.data['action'] == 'edit':
+				cond_num_global = str(form.data['identifier'])			
+				cond_name_global = proc_data[exp_name_global+cond_num_global][0]
+				return redirect(url_for('processed_data'))
+			if form.data['action'] == 'delete':
+				if form.data['identifier']==0:
+					msg='You cannot delete baseline condition. Delete entire experiment.'
+					return render_template('experiment-message.html', msg=msg)
+				cond_num_global = str(form.data['identifier'])			
+				cond_name_global = proc_data[exp_name_global+cond_num_global][0]					
+				proc_data.pop(exp_name_global+cond_num_global)
+				for condnum in range(form.data['identifier']+1, metadata[exp_name_global][9]):
+					proc_data[exp_name_global+str(condnum-1)]=proc_data.pop(exp_name_global+str(condnum))
+				metadata[exp_name_global][9]-=1
+				with open('metadata.json', 'w') as outfile:
+					json.dump(metadata, outfile)
+				with open('processed_data.json', 'w') as outfile:
+					json.dump(proc_data, outfile)
+				msg='Condition '+cond_name_global+' deleted.'
+				return render_template('experiment-message.html', msg=msg)
+					
+			
+@app.route('/new-condition', methods=['GET', 'POST'])
+@login_required
+def new_condition():
+	global exp_name_global
+	global cond_name_global
+	global cond_num_global
+	if request.method == "GET":
+		form = NewConditionForm()
+		return render_template('new-condition.html', form=form, name=exp_name_global)
+	if request.method == "POST":
+		form = NewConditionForm(request.form)
+		if form.validate():
+			cond_num_global = str(metadata[exp_name_global][9])
+			cond_name_global = form.data['name']
+			proc_data[exp_name_global+cond_num_global] = [None]*29
+			proc_data[exp_name_global+cond_num_global][0]=cond_name_global
+			metadata[exp_name_global][9]+=1
+			with open('metadata.json', 'w') as outfile:
+				json.dump(metadata, outfile)
+			with open('processed_data.json', 'w') as outfile:
+				json.dump(proc_data, outfile)
+			return redirect(url_for('processed_data'))
 
 
 @app.route('/delete-experiment', methods=['GET', 'POST'])
@@ -286,9 +378,10 @@ def delete_experiment():
 	else:
 		form = DeleteForm(request.form)
 		if form.data['verify'] == 'DELETE':
-			metadata.pop(exp_name_global)
 			notes.pop(exp_name_global)
-			proc_data.pop(exp_name_global)
+			for condnum in range(metadata[exp_name_global][9]):
+				proc_data.pop(exp_name_global+str(condnum))
+			metadata.pop(exp_name_global)	
 			with open('metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			with open('notes.json', 'w') as outfile:
@@ -306,6 +399,8 @@ def delete_experiment():
 @login_required
 def new_experiment():
 	global exp_name_global
+	global cond_num_global
+	global cond_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
@@ -321,15 +416,18 @@ def new_experiment():
 				g.user.id, form.data['exp_id'], str(form.data['exp_date']),
 				str(form.data['animal_date']), form.data['experimenter'],
 				form.data['lab'], form.data['temp'], form.data['species'],
-				form.data['saline']]
+				form.data['saline'], 1]
 			notes[g.user.id+':'+form.data['exp_id']] = form.data['notes']
-			proc_data[g.user.id+':'+form.data['exp_id']] = [None]*28
+			proc_data[g.user.id+':'+form.data['exp_id']+'0'] = [None]*29
+			proc_data[g.user.id+':'+form.data['exp_id']+'0'][0]='baseline'
 			with open('metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			with open('notes.json', 'w') as outfile:
 				json.dump(notes, outfile)
 			with open('processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
+			cond_num_global = '0'
+			cond_name_global = 'baseline'
 			return redirect(url_for('processed_data'))
 		else:
 			return render_template('new-experiment.html', name=g.user.id, form=form)
@@ -372,21 +470,23 @@ def processed_data():
 	if config['EditsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	global exp_name_global
+	global cond_num_global
+	global cond_name_global
 	if request.method == 'GET':
-		data = proc_data[exp_name_global]
-		form = ProcessedDataForm(pyl_hz=data[0], pyl_cycvar=data[1], pyl_niqr=data[2],
-			gas_hz=data[3], gas_cycvar=data[4], gas_niqur=data[5], pd_off=data[6],
-			pd_spikes=data[7], lp_on=data[8], lp_off=data[9], lp_spikes=data[10],
-			py_on=data[11], py_off=data[12], py_spikes=data[13], vd_on=data[14],
-			vd_off=data[15], vd_spikes=data[16], lg_off=data[17], lg_spikes=data[18],
-			dg_on=data[19], dg_off=data[20], dg_spikes=data[21], gm_on=data[22],
-			gm_off=data[23], gm_spikes=data[24], mg_on=data[25], mg_off=data[26],
-			mg_spikes=data[27])
-		return render_template('processed-data.html', form=form, name=exp_name_global)
+		data = proc_data[exp_name_global+cond_num_global]
+		form = ProcessedDataForm(pyl_hz=data[1], pyl_cycvar=data[2], pyl_niqr=data[3],
+			gas_hz=data[4], gas_cycvar=data[5], gas_niqur=data[6], pd_off=data[7],
+			pd_spikes=data[8], lp_on=data[9], lp_off=data[10], lp_spikes=data[11],
+			py_on=data[12], py_off=data[13], py_spikes=data[14], vd_on=data[15],
+			vd_off=data[16], vd_spikes=data[17], lg_off=data[18], lg_spikes=data[19],
+			dg_on=data[20], dg_off=data[21], dg_spikes=data[22], gm_on=data[23],
+			gm_off=data[24], gm_spikes=data[25], mg_on=data[26], mg_off=data[27],
+			mg_spikes=data[28])
+		return render_template('processed-data.html', form=form, name=exp_name_global, cond=cond_name_global)
 	else:
 		form = ProcessedDataForm(request.form)
 		if form.validate():
-			proc_data[exp_name_global] = [form.data['pyl_hz'],
+			proc_data[exp_name_global+cond_num_global] = [cond_name_global, form.data['pyl_hz'],
 				form.data['pyl_cycvar'], form.data['pyl_niqr'], form.data['gas_hz'],
 				form.data['gas_cycvar'], form.data['gas_niqr'], form.data['pd_off'],
 				form.data['pd_spikes'], form.data['lp_on'], form.data['lp_off'],
@@ -398,9 +498,9 @@ def processed_data():
 				form.data['mg_on'], form.data['mg_off'], form.data['mg_spikes']]
 			with open('processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
-			return redirect(url_for('upload_page'))
+			return redirect(url_for('experiment_page'))
 		else:
-			return render_template('processed-data.html', form=form, name=exp_name_global)
+			return render_template('processed-data.html', form=form, name=exp_name_global, cond=cond_name_global)
 
 
 @app.route('/new-user', methods=['GET', 'POST'])
