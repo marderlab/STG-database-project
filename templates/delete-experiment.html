@@ -1,0 +1,20 @@
+
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Pyloric Data Warehouse</title>
+</head>
+<body>
+<h3> Are you sure you want to delete experiment {{ name }}?</h3>
+<h3> This cannot be undone! </h3>
+<h3> This will remove all metadata, processed data, and uploaded raw data for {{name}}</h3>
+<div class=page>  
+  <body>
+  <form method="post" action="/delete-experiment">
+    <div>{{ form.verify.label }} {{ form.verify() }}</div>
+    <p><input type=submit value=Delete>
+  </form>
+    <p><a href="{{ url_for('upload_page') }}">Back to upload page</a></p>
+  </body>
+</div>
+</body>

@@ -1,0 +1,125 @@
+
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Pyloric Data Warehouse</title>
+</head>
+<div class=page>
+  <h3>Enter any available processed data for this experiment, {{name}}</h3>
+  <form method="post" action="/processed-data"> 
+    <div>{{ form.pyl_hz.label }}: {{ form.pyl_hz(class="css_class") }}</div>
+      {% for error in form.pyl_hz.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.pyl_cycvar.label }}: {{ form.pyl_cycvar(class="css_class") }}</div>
+      {% for error in form.pyl_cycvar.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.pyl_niqr.label }}: {{ form.pyl_niqr(class="css_class") }}</div>
+      {% for error in form.pyl_niqr.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}       
+    <div>{{ form.gas_hz.label }}: {{ form.gas_hz(class="css_class") }}</div>
+      {% for error in form.gas_hz.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.gas_cycvar.label }}: {{ form.gas_cycvar(class="css_class") }}</div>
+      {% for error in form.gas_cycvar.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.gas_niqr.label }}: {{ form.gas_niqr(class="css_class") }}</div>
+      {% for error in form.gas_niqr.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.pd_off.label }}: {{ form.pd_off(class="css_class") }}</div>
+      {% for error in form.pd_off.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.pd_spikes.label }}: {{ form.pd_spikes(class="css_class") }}</div>
+      {% for error in form.pd_spikes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.lp_on.label }}: {{ form.lp_on(class="css_class") }}</div>
+      {% for error in form.lp_on.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.lp_off.label }}: {{ form.lp_off(class="css_class") }}</div>
+      {% for error in form.lp_off.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.lp_spikes.label }}: {{ form.lp_spikes(class="css_class") }}</div>
+      {% for error in form.lp_spikes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}        
+    <div>{{ form.py_on.label }}: {{ form.py_on(class="css_class") }}</div>
+      {% for error in form.py_on.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.py_off.label }}: {{ form.py_off(class="css_class") }}</div>
+      {% for error in form.py_off.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.py_spikes.label }}: {{ form.py_spikes(class="css_class") }}</div>
+      {% for error in form.py_spikes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}  
+    <div>{{ form.vd_on.label }}: {{ form.vd_on(class="css_class") }}</div>
+      {% for error in form.vd_on.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.vd_off.label }}: {{ form.vd_off(class="css_class") }}</div>
+      {% for error in form.vd_off.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.vd_spikes.label }}: {{ form.vd_spikes(class="css_class") }}</div>
+      {% for error in form.vd_spikes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}        
+    <div>{{ form.lg_off.label }}: {{ form.lg_off(class="css_class") }}</div>
+      {% for error in form.lg_off.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.lg_spikes.label }}: {{ form.lg_spikes(class="css_class") }}</div>
+      {% for error in form.lg_spikes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.dg_on.label }}: {{ form.dg_on(class="css_class") }}</div>
+      {% for error in form.dg_on.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.dg_off.label }}: {{ form.dg_off(class="css_class") }}</div>
+      {% for error in form.dg_off.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.dg_spikes.label }}: {{ form.dg_spikes(class="css_class") }}</div>
+      {% for error in form.dg_spikes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}        
+    <div>{{ form.gm_on.label }}: {{ form.gm_on(class="css_class") }}</div>
+      {% for error in form.gm_on.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.gm_off.label }}: {{ form.gm_off(class="css_class") }}</div>
+      {% for error in form.gm_off.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.gm_spikes.label }}: {{ form.gm_spikes(class="css_class") }}</div>
+      {% for error in form.gm_spikes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}  
+    <div>{{ form.mg_on.label }}: {{ form.mg_on(class="css_class") }}</div>
+      {% for error in form.mg_on.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.mg_off.label }}: {{ form.mg_off(class="css_class") }}</div>
+      {% for error in form.mg_off.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.mg_spikes.label }}: {{ form.mg_spikes(class="css_class") }}</div>
+      {% for error in form.mg_spikes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}                                      
+    <p><input type=submit value=Submit>
+  </form>
+  <p><a href="{{ url_for('upload_page') }}">Nevermind, back to upload page</a></p>    
+</div>

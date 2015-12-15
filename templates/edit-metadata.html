@@ -1,0 +1,42 @@
+
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Pyloric Data Warehouse</title>
+</head>
+<div class=page>
+  <h3>Enter metadata for experiment, {{name}}:</h3>
+  <form method="post" action="/edit-metadata">   
+    <h4>NOTE: Dates must be entered in M/D/YYYY format. Four-digit year!</h4>  
+    <h4>Old experiment date was {{ oldexpdate }}. Sorry, must re-enter to edit. Watch format!</h4>
+    <div>{{ form.exp_date.label }}: {{ form.exp_date() }}</div>
+      {% for error in form.exp_date.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}      
+    <h4>Old animal date was {{ oldandate }}. Sorry, must re-enter to edit. Watch format!</h4>      
+    <div>{{ form.animal_date.label }}: {{ form.animal_date() }}</div>
+      {% for error in form.animal_date.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}          
+    <div>{{ form.experimenter.label }}: {{ form.experimenter(class="css_class") }}</div>
+      {% for error in form.experimenter.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}  
+    <div>{{ form.lab.label }}: {{ form.lab(class="css_class") }}</div>
+      {% for error in form.lab.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}         
+    <div>{{ form.temp.label }}: {{ form.temp(class="css_class") }}</div>
+      {% for error in form.temp.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}  
+    <div>{{ form.species.label }}: {{ form.species(class="css_class") }}</div>
+    <div>{{ form.saline.label }}: {{ form.saline(class="css_class") }}</div>  
+    <div>{{ form.notes.label }}: {{ form.notes(class="css_class") }}</div>
+      {% for error in form.notes.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}                
+    <p><input type=submit value=Submit>
+  </form>
+  <p><a href="{{ url_for('upload_page') }}">Nevermind, back to upload page</a></p>    
+</div>

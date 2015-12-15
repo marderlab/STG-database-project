@@ -5,11 +5,23 @@
   <title>Pyloric Data Warehouse</title>
 </head>
 <div class=page>
-  <h3>Protected Upload Page!<h3>
+  <h3>Upload Page!</h3>
+  <h4>Here are the metadata of all the experiments you have uploaded / can modify:</h4>
+  {{table_html | safe}}
+  
+  <form method="post" action="/upload-page"> 
+    <div>{{ form.identifier.label }}: {{ form.identifier(class="css_class") }}</div>
+      {% for error in form.identifier.errors %}
+        <span style="color: red;">[Invalid Username]</span>
+      {% endfor %}
+	<div>{{ form.action.label }}: {{ form.action(class="css_class") }}</div> 
+    <p><input type=submit value="Perform Action">
+  </form>
   
   <body>
-    <p><a href="{{ url_for('download_page') }}">Download Page</a></p>
-    <p><a href="{{ url_for('index') }}">Back to Home</a></p>    
+    <p><a href="{{ url_for('new_experiment') }}">Enter a new experiment</a></p>  
+    <p><a href="{{ url_for('download_page') }}">Download page</a></p>
+    <p><a href="{{ url_for('index') }}">Back to home</a></p>    
   </body>
-  
+    
 </div>
