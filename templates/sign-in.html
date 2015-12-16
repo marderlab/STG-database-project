@@ -9,6 +9,7 @@
   <h4>Enter user credentials:</h4>
   <form method="post" action="/login"> 
     <div>{{ form.username.label }}: {{ form.username(class="css_class") }}</div>
+    <p>
     <div>{{ form.password.label }}: {{ form.password() }}</div>
     <p><input type=submit value=Submit>
   </form>
