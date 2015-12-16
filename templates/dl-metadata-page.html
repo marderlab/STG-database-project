@@ -4,15 +4,14 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
-<div class=page>
-  <h4>Here is the table of all experiment metadata (notes not shown), by experiment and condition:</h4>
-  {{table_html | safe}}
-  
+  <h3>Metadata for all entered experiments:</h3>
+  <p>
   <body>
     <p><a href="{{ url_for('dl_metadata_json') }}">Download as .json file</a></p> 
     <p><a href="{{ url_for('dl_metadata_csv') }}">Download as .csv file</a></p> 
     <p><a href="{{ url_for('dl_metadata_csv_nonotes') }}">Download as .csv file without notes</a></p>     
     <p><a href="{{ url_for('download_page') }}">Back to download page</a></p>
-  </body>
-    
+  </body>   
+<div class=page>
+  {{table_html | safe}}  
 </div>

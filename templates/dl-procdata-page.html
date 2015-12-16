@@ -5,13 +5,13 @@
   <title>STG Data Warehouse</title>
 </head>
 <div class=page>
-  <h4>Here are processed data for all experiments and conditions:</h4>
-  {{table_html | safe}}
-
+  <h3>Processed data for all experiments and conditions:</h3><p>
   <body>
     <p><a href="{{ url_for('dl_procdata_json') }}">Download as .json file</a></p> 
     <p><a href="{{ url_for('dl_procdata_csv') }}">Download as .csv file</a></p> 
     <p><a href="{{ url_for('download_page') }}">Back to download page</a></p>
   </body>
+  
+  {{table_html | safe}}
     
 </div>

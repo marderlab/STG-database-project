@@ -7,7 +7,7 @@ STG Database Web Server
 @author: alhamood
 """
 
-from flask import Flask, render_template, request, redirect, url_for, g, make_response
+from flask import Flask, render_template, request, redirect, url_for, g, make_response, send_from_directory
 from flask.ext.login import LoginManager, UserMixin, login_required
 from wtforms import Form, validators, fields
 from werkzeug import secure_filename
@@ -21,7 +21,6 @@ import hashlib
 import flask.ext.login
 import simplejson as json
 import pandas as pd
-
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -84,7 +83,8 @@ class EditUserForm(Form):
 
 class UserForm(EditUserForm):
 	username = fields.TextField('Username', [
-		validators.Length(max=20, message='Under 20 characters please!'),
+		validators.Length(max=12, message='Maximum 12 characters'),
+		validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
 		validators.InputRequired(message='Username is required')
 		])
 
@@ -139,7 +139,10 @@ class ExperimentActionForm(Form):
 class FileDeleteForm(Form):
 	identifier = fields.IntegerField('File index (number in left column)')
 	confirm = fields.TextField('Type DELETE here to delete file with index entered above. Cannot be undone!', [
-		validators.Regexp('DELETE', message=('Did not type DELETE'))])		
+		validators.Regexp('DELETE', message=('Did not type DELETE'))])
+
+class FileDownloadForm(Form):
+	identifier = fields.IntegerField('File index (number in left column)')	
 		
 
 class NewConditionForm(Form):
@@ -169,6 +172,7 @@ class MetadataForm(Form):
 class NewMetadataForm(MetadataForm):
 	exp_id = fields.TextField('Experiment ID (such as lab notebook and page)', [
 		validators.Length(max=10, message='10 characters max'),
+		validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
 		validators.InputRequired(message='You must provide a unique ID')])
 		
 		
@@ -279,6 +283,28 @@ def download_page():
 		return render_template('feature-disabled.html')
 	return render_template('download-page.html')
 	
+
+@app.route('/dl-files-page', methods = ['GET', 'POST'])
+def dl_files_page():
+	global exp_name_global
+	if config['DownloadsAllowed'] != 1:
+		return render_template('feature-disabled.html')
+	metadata_df = MakeMetaDF(metadata)
+	metadata_df.index = range(len(metadata_df))
+	metadata_df = metadata_df.drop('Notes', axis=1)
+	metadata_df = metadata_df.loc[metadata_df.loc[:,'Files']>0,:]		
+	if request.method == 'POST':
+		form = FileDownloadForm(request.form)
+		print('hello!!')
+		if form.data['identifier']>=0 and form.data['identifier']<len(metadata_df):
+			exp_name_global = metadata_df.loc[form.data['identifier']]['User']+'-'+metadata_df.loc[form.data['identifier']]['Exp ID']
+			print(exp_name_global)
+			print('hello')
+			return redirect(url_for('file_download'))
+	form = FileDownloadForm()
+	table_html = metadata_df.to_html()
+	return render_template('dl-files-page.html', table_html=table_html, form=form)
+
 	
 @app.route('/dl-metadata-page')
 def dl_metadata_page():
@@ -457,8 +483,39 @@ def file_upload():
 		else:
 			msg = 'Upload failed. File type is probably not allowed.'
 			return render_template('file-upload-message.html', msg=msg)	
-			
-			
+
+
+@app.route('/file-download', methods=['GET', 'POST'])
+@login_required
+def file_download():
+	global exp_name_global
+	if config['EditsAllowed'] != 1:
+		return render_template('feature-disabled.html')
+	if metadata[exp_name_global][10] == 0:
+		msg = 'No files to download.'
+		return render_template('download-message.html', msg=msg)
+	if request.method == 'GET':
+		filenames = os.listdir('files/'+exp_name_global)
+		filenames_df = pd.DataFrame(filenames, columns=['Filename'])
+		table_html = filenames_df.to_html()
+		form = FileDownloadForm()
+		return render_template('file-download-page.html', table_html=table_html, form=form)
+	else:
+		form = FileDownloadForm(request.form)
+		if form.validate():
+			filenames = os.listdir('files/'+exp_name_global)
+			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
+			if form.data['identifier'] >= len(filenames_df['Filename']) or form.data['identifier'] < 0:
+				msg = 'Download failed. Invalid identifier.'
+				return render_template('download-message.html', msg=msg)
+			return send_from_directory('files/'+exp_name_global+'/', filenames_df['Filename'][form.data['identifier']])
+		else:
+			filenames = os.listdir('files/'+exp_name_global)
+			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
+			table_html = filenames_df.to_html()		
+			return render_template('file-delete-page.html', table_html=table_html, form=form)			
+
+
 @app.route('/file-delete', methods=['GET', 'POST'])
 @login_required
 def file_delete():

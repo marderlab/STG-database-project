@@ -8,19 +8,15 @@
   <h3>Here are the files for this experiment:</h3>
   {{table_html | safe}}
   <p><p>
-  <h3>Delete one:</h3>
-  <form method="post" action="/file-delete"> 
+  <h3>Choose a file and click the button to download:</h3>
+  <form method="post" action="/file-download"> 
     <div>{{ form.identifier.label }}: {{ form.identifier(class="css_class") }}</div>
       {% for error in form.identifier.errors %}
         <span style="color: red;">[Invalid identifier]</span>
       {% endfor %}
-	<div>{{ form.confirm.label }} {{ form.confirm(class="css_class") }}</div> 
-	  {% for error in form.confirm.errors %}
-        <span style="color: red;">{{error}}</span>
-      {% endfor %}
-    <p><input type=submit value="Delete File">
+    <p><input type=submit value="Download File">
   </form>
   <body>         
-    <p><a href="{{ url_for('experiment_page') }}">Nevermind, back to experiment</a></p>
+    <p><a href="{{ url_for('download_page') }}">Nevermind, back to downloads</a></p>
   </body>  
 </div>

@@ -5,10 +5,11 @@
   <title>STG Data Warehouse</title>
 </head>
 <div class=page>
-  <h3>Download page!<h3>
+  <h3>Download STG Data -- Options:</h3>
   <body>
-    <p><a href="{{ url_for('dl_metadata_page') }}">View and download metadata</a></p>
-    <p><a href="{{ url_for('dl_procdata_page') }}">View and download processed data</a></p>    
+    <p>View and download <a href="{{ url_for('dl_metadata_page') }}">metadata</a> such as experimenter, date, notes</p>
+    <p>View and download <a href="{{ url_for('dl_procdata_page') }}">processed data</a> such as frequency, phase</p>
+	<p>View and download <a href="{{ url_for('dl_files_page') }}">uploaded files</a> such as raw data</p>       
     <p><a href="{{ url_for('index') }}">Back to home</a></p>    
   </body>
 </div>
