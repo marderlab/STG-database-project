@@ -4,25 +4,29 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
+<img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
   <h3>Welcome to the STG Data Warehouse!</h3>
   {% if current_user.is_authenticated %}
   	<h4>You are currently signed in as {{ current_user.id }}</h4>
-  	<h4>Your registered email is: {{ current_user.email }}. Your lab is: {{ current_user.lab }}.</h4>
+  	<p>Your registered email is: {{ current_user.email }}. Your lab is: {{ current_user.lab }}.</p>
   	 {% if current_user.id == "Admin" %}
+  	 <h3>Admin options:</h3>
       <p><a href="{{ url_for('admin_page') }}">Admin Page </a></p>  
+      <p><a href="{{ url_for('upload_page') }}">Experiments page</a></p>  
      {% else %}
+     <h3>User options:</h3>
+      <p><a href="{{ url_for('upload_page') }}">My experiments page</a></p>  
   	  <p><a href="{{ url_for('edit_user') }}">Edit user info</a> / <a href="{{ url_for('password_change') }}">Change password</a></p> 
   	 {% endif %} 	
   	<p><a href="{{ url_for('sign_out') }}">Sign out</a></p> 
   {% else %} 
-    <h3>You are not signed in.</h3>
-    <p><a href="{{ url_for('sign_in') }}">Sign in</a></p> 
-     
-    <p><a href="{{ url_for('new_user') }}">Create new user</a></p>
+    <h4>You are not signed in.</h4>
+    <p><h3>Guest options:</h3>
+    <p><a href="{{ url_for('sign_in') }}">Sign in</a> to existing user account</p>      
+    <p>Create <a href="{{ url_for('new_user') }}">new user</a></p>
   {% endif %}
     <body>
-    <p><a href="{{ url_for('download_page') }}">Download Page (no log-in required)</a></p>
-    <p><a href="{{ url_for('upload_page') }}">My Experiments Page (must be signed-in)</a></p>  
+    <p>View and <a href="{{ url_for('download_page') }}">download data</a></p>
   </body>
 </div>

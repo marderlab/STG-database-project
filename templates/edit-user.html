@@ -4,23 +4,25 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
+<img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
-  <h3>Enter new information below:</h3>
+  <h3>Enter new information for {{name}} below:</h3>
   <form method="post" action="/edit-user"> 
-    <h4>Info for {{ name }}</h4>   
     <div>{{ form.email.label }}: {{ form.email(class="css_class") }}</div>
       {% for error in form.email.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}    
+      {% endfor %} 
+      <p>   
     <div>{{ form.surname.label }}: {{ form.surname(class="css_class") }}</div>
       {% for error in form.surname.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}    
+      {% endfor %} 
+      <p>   
     <div>{{ form.lab.label }}: {{ form.lab(class="css_class") }}</div>
       {% for error in form.lab.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}                
     <p><input type=submit value=Submit>
   </form>
-  <p><a href="{{ url_for('index') }}">Nevermind, Back to Home</a></p>    
+  <p>Nevermind, <a href="{{ url_for('index') }}">back to home</a></p>    
 </div>

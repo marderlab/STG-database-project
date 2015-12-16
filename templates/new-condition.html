@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
+<img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
   <h3>Enter name of new condition for experiment {{ name }}:</h3>
   <form method="post" action="/new-condition"> 
@@ -13,5 +14,5 @@
       {% endfor %}    
     <p><input type=submit value="Continue to processed data">
   </form>
-  <p><a href="{{ url_for('experiment_page') }}">Nevermind, back to experiment</a></p>    
+  <p>Nevermind, back to <a href="{{ url_for('experiment_page') }}">experiment</a></p>    
 </div>

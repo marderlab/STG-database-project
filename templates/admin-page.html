@@ -4,17 +4,20 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
+<img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
-  <h2>Admin page!<h2>
   <body>
     <h3>Registered Users:</h3>
     {{table_html | safe}}
   </body>
+  	<p>
+  	<h3>Adminstrator actions:</h3>
     <form method="post" action="/admin-page"> 
     <div>{{ form.username.label }}: {{ form.username(class="css_class") }}</div>
       {% for error in form.username.errors %}
         <span style="color: red;">[Invalid Username]</span>
       {% endfor %}
+      <p>
 	<div>{{ form.action.label }}: {{ form.action(class="css_class") }}</div> 
     <p><input type=submit value=Submit>
   </form>

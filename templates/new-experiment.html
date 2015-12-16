@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
+<img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
   <h3>Enter metadata for new experiment, {{name}}:</h3>
   <form method="post" action="/new-experiment"> 
@@ -40,5 +41,5 @@
       {% endfor %}                
     <p><input type=submit value="Continue to baseline data">
   </form>
-  <p><a href="{{ url_for('upload_page') }}">Nevermind, back to upload page</a></p>    
+  <p>Nevermind, back to <a href="{{ url_for('upload_page') }}">experiments page</a></p>    
 </div>

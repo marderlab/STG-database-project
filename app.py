@@ -290,9 +290,9 @@ def dl_files_page():
 	if config['DownloadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	metadata_df = MakeMetaDF(metadata)
-	metadata_df.index = range(len(metadata_df))
 	metadata_df = metadata_df.drop('Notes', axis=1)
-	metadata_df = metadata_df.loc[metadata_df.loc[:,'Files']>0,:]		
+	metadata_df = metadata_df.loc[metadata_df.loc[:,'Files']>0,:]	
+	metadata_df.index = range(len(metadata_df))		
 	if request.method == 'POST':
 		form = FileDownloadForm(request.form)
 		print('hello!!')
@@ -421,7 +421,7 @@ def experiment_page():
 		else:
 			filenames = None
 			filecount = None
-		return render_template('experiment-page.html', table_html=table_html, filenames=filenames, filecount=filecount, form=form)
+		return render_template('experiment-page.html', table_html=table_html, filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
 	if request.method == 'POST':
 		form = ExperimentActionForm(request.form)
 		if form.validate():
@@ -459,7 +459,7 @@ def experiment_page():
 			else:
 				filenames = None
 				filecount = None
-			return render_template('experiment-page.html', table_html=table_html, filenames=filenames, filecount=filecount, form=form)
+			return render_template('experiment-page.html', table_html=table_html, filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
 		
 
 @app.route('/file-upload', methods=['GET', 'POST'])
@@ -508,7 +508,7 @@ def file_download():
 			if form.data['identifier'] >= len(filenames_df['Filename']) or form.data['identifier'] < 0:
 				msg = 'Download failed. Invalid identifier.'
 				return render_template('download-message.html', msg=msg)
-			return send_from_directory('files/'+exp_name_global+'/', filenames_df['Filename'][form.data['identifier']])
+			return send_from_directory('files/'+exp_name_global+'/', filenames_df['Filename'][form.data['identifier']], as_attachment=True)
 		else:
 			filenames = os.listdir('files/'+exp_name_global)
 			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
@@ -862,3 +862,4 @@ if __name__ == '__main__':
 	app.config["SECRET_KEY"] = "ITSASECRET"
 	port = int(os.environ.get("PORT", 5000))
 	app.run(host='0.0.0.0', port=port, debug=True)
+	#app.run(host='0.0.0.0', port=port, debug=True, ssl_context='adhoc')

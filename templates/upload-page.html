@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
+<img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
-  <h3>Here are the metadata of all the experiments you have uploaded / can modify:</h3>
+  <h3>Here are the metadata for your experiments:</h3>
   {{table_html | safe}} 
   <p><p><h3>Act on experiments:</h3>
   <form method="post" action="/upload-page"> 
@@ -19,8 +20,8 @@
   </form> 
   <p><p><h3>Other options:</h3>
   <body>
-    <p><a href="{{ url_for('new_experiment') }}">Enter a new experiment</a></p>  
-    <p><a href="{{ url_for('download_page') }}">Download page</a></p>
+    <p>Enter a <a href="{{ url_for('new_experiment') }}">new experiment</a></p>  
+    <p>View and <a href="{{ url_for('download_page') }}">download data</a></p>
     <p><a href="{{ url_for('index') }}">Back to home</a></p>    
   </body>   
 </div>

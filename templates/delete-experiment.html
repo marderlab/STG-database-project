@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
+<img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <body>
 <h3> Are you sure you want to delete experiment {{ name }}?</h3>
 <h3> This cannot be undone! </h3>
@@ -14,7 +15,7 @@
     <div>{{ form.verify.label }} {{ form.verify() }}</div>
     <p><input type=submit value=Delete>
   </form>
-    <p><a href="{{ url_for('upload_page') }}">Back to upload page</a></p>
+    <p>Nevermind, back to <a href="{{ url_for('upload_page') }}">experiments page</a></p>
   </body>
 </div>
 </body>

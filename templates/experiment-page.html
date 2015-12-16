@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <title>STG Data Warehouse</title>
 </head>
+<img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
-  <h3>Here are the conditions of this experiment:</h3>
+  <h3>Here are the conditions of experiment {{name}}:</h3>
   {{table_html | safe}}
   <h3>Uploaded files ({{filecount}}):</h3>
   <p>{{filenames}}
@@ -22,10 +23,10 @@
   </form>
   <h3>More options:</h3>
   <body>
-    <p><a href="{{ url_for('new_condition') }}">Enter data for a new condition for this experiment</a></p>  
-    <p><a href="{{ url_for('file_upload') }}">Upload a file for this experiment</a></p>  
-    <p><a href="{{ url_for('file_delete') }}">Delete a file from this experiment</a></p>          
-    <p><a href="{{ url_for('upload_page') }}">Back to user experiments page</a></p>
-    <p><a href="{{ url_for('index') }}">Home</a></p>    
+    <p>Enter data for a <a href="{{ url_for('new_condition') }}">new condition</a> for this experiment</p>  
+    <p><a href="{{ url_for('file_upload') }}">Upload a file</a> for this experiment</p>  
+    <p><a href="{{ url_for('file_delete') }}">Delete a file</a> from this experiment</p>          
+    <p>Back to <a href="{{ url_for('upload_page') }}">experiments page</a></p>
+    <p><a href="{{ url_for('index') }}">Back to home</a></p>    
   </body>  
 </div>
