@@ -5,17 +5,19 @@
   <title>STG Data Warehouse</title>
 </head>
 <div class=page>
-  <h3>Your experiments:</h3>
-  <h4>Here are the metadata of all the experiments you have uploaded / can modify:</h4>
+  <h3>Here are the metadata of all the experiments you have uploaded / can modify:</h3>
   {{table_html | safe}} 
+  <p><p><h3>Act on experiments:</h3>
   <form method="post" action="/upload-page"> 
     <div>{{ form.identifier.label }}: {{ form.identifier(class="css_class") }}</div>
       {% for error in form.identifier.errors %}
         <span style="color: red;">[Invalid identifier]</span>
       {% endfor %}
+      <p>
 	<div>{{ form.action.label }}: {{ form.action(class="css_class") }}</div> 
     <p><input type=submit value="Act on experiment">
   </form> 
+  <p><p><h3>Other options:</h3>
   <body>
     <p><a href="{{ url_for('new_experiment') }}">Enter a new experiment</a></p>  
     <p><a href="{{ url_for('download_page') }}">Download page</a></p>

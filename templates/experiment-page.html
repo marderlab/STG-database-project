@@ -2,25 +2,29 @@
 <!doctype html>
 <head>
   <meta charset="utf-8">
-  <title>Pyloric Data Warehouse</title>
+  <title>STG Data Warehouse</title>
 </head>
 <div class=page>
-  <h4>Here are the conditions of this experiment:</h4>
+  <h3>Here are the conditions of this experiment:</h3>
   {{table_html | safe}}
-  
+  <h3>Uploaded files ({{filecount}}):</h3>
+  <p>{{filenames}}
+  <p><p>
+  <h3>Act on conditions:</h3>
   <form method="post" action="/experiment-page"> 
     <div>{{ form.identifier.label }}: {{ form.identifier(class="css_class") }}</div>
       {% for error in form.identifier.errors %}
         <span style="color: red;">[Invalid identifier]</span>
       {% endfor %}
+      <p>
 	<div>{{ form.action.label }}: {{ form.action(class="css_class") }}</div> 
     <p><input type=submit value="Act on condition">
   </form>
-  
+  <h3>More options:</h3>
   <body>
     <p><a href="{{ url_for('new_condition') }}">Enter data for a new condition for this experiment</a></p>  
-    <p><a href="{{ url_for('file_upload') }}">Upload files for this experiment</a></p>      
-    <p><a href="{{ url_for('upload_page') }}">Upload page</a></p>
-  </body>
-    
+    <p><a href="{{ url_for('file_upload') }}">Upload a file for this experiment</a></p>  
+    <p><a href="{{ url_for('file_delete') }}">Delete a file from this experiment</a></p>          
+    <p><a href="{{ url_for('upload_page') }}">Back to user experiments page</a></p>
+  </body>  
 </div>

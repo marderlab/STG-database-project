@@ -11,6 +11,7 @@ from flask import Flask, render_template, request, redirect, url_for, g, make_re
 from flask.ext.login import LoginManager, UserMixin, login_required
 from wtforms import Form, validators, fields
 from werkzeug import secure_filename
+from shutil import rmtree
 import os
 import sys
 import random
@@ -133,6 +134,12 @@ class ExperimentActionForm(Form):
 	action = fields.SelectField('Action', choices=[
 		('edit', 'Edit Condition Data'),
 		('delete', 'Delete Condition')])
+		
+		
+class FileDeleteForm(Form):
+	identifier = fields.IntegerField('File index (number in left column)')
+	confirm = fields.TextField('Type DELETE here to delete file with index entered above. Cannot be undone!', [
+		validators.Regexp('DELETE', message=('Did not type DELETE'))])		
 		
 
 class NewConditionForm(Form):
@@ -356,7 +363,7 @@ def upload_page():
 		if form.validate():
 			if form.data['identifier']<0 or form.data['identifier']>(len(metadata_df)-1) or form.data['identifier']==None:
 				return render_template('upload-message.html', msg='Invalid identifier')
-			exp_name_global = metadata_df.loc[form.data['identifier'], 'User']+':'+metadata_df.loc[form.data['identifier'], 'Exp ID']	
+			exp_name_global = metadata_df.loc[form.data['identifier'], 'User']+'-'+metadata_df.loc[form.data['identifier'], 'Exp ID']	
 			if form.data['action'] == 'editP':
 				return redirect(url_for('experiment_page'))
 			if form.data['action'] == 'editM':
@@ -380,9 +387,17 @@ def experiment_page():
 		conditions_df.index = range(len(conditions_df))
 		table_html = conditions_df.to_html()
 		form = ExperimentActionForm()
-		return render_template('experiment-page.html', table_html=table_html, form=form)
+		if not os.path.isdir('files/'+exp_name_global):
+			os.mkdir('files/'+exp_name_global)
+		if metadata[exp_name_global][10] > 0:
+			filenames = os.listdir('files/'+exp_name_global)
+			filecount = metadata[exp_name_global][10]
+		else:
+			filenames = None
+			filecount = None
+		return render_template('experiment-page.html', table_html=table_html, filenames=filenames, filecount=filecount, form=form)
 	if request.method == 'POST':
-		form= ExperimentActionForm(request.form)
+		form = ExperimentActionForm(request.form)
 		if form.validate():
 			if form.data['identifier']<0 or form.data['identifier']>metadata[exp_name_global][9]:
 				return render_template('upload-message.html', msg='Invalid identifier')
@@ -406,28 +421,80 @@ def experiment_page():
 					json.dump(proc_data, outfile)
 				msg='Condition '+cond_name_global+' deleted.'
 				return render_template('experiment-message.html', msg=msg)
-					
+		else:
+			conditions_df = MakeCondDF(proc_data)
+			conditions_df = conditions_df[conditions_df.index.str.contains(exp_name_global)]
+			conditions_df = conditions_df.sort_index()
+			conditions_df.index = range(len(conditions_df))
+			table_html = conditions_df.to_html()
+			if metadata[exp_name_global][10] > 0:
+				filenames = os.listdir('files/'+exp_name_global)
+				filecount = metadata[exp_name_global][10]
+			else:
+				filenames = None
+				filecount = None
+			return render_template('experiment-page.html', table_html=table_html, filenames=filenames, filecount=filecount, form=form)
+		
 
-# TOTALLY NAIVE UPLOAD CODE HERE! It works but just dumps everything into root.
 @app.route('/file-upload', methods=['GET', 'POST'])
 @login_required
 def file_upload():
+	global exp_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
-		return render_template('file-upload-page.html')
-	file = request.files['file']
-	if file and allowed_file(file.filename):
-		filename = secure_filename(file.filename)
-		#os.chdir('./templates')
-		file.save('templates/'+filename)
-		msg = 'Successfully uploaded '+filename
-		return render_template('file-upload-message.html', msg=msg)
+		return render_template('file-upload-page.html', name=exp_name_global)
 	else:
-		msg = 'Upload failed. Filetype is probably not allowed.'
-		return render_template('file-upload-message.html', msg=msg)		
-
-
+		file = request.files['file']
+		if file and allowed_file(file.filename):
+			filename = secure_filename(file.filename)
+			file.save('files/'+exp_name_global+'/'+filename)
+			metadata[exp_name_global][10]+=1
+			with open('metadata.json', 'w') as outfile:
+				json.dump(metadata, outfile)
+			msg = 'Successfully uploaded '+filename
+			return render_template('file-upload-message.html', msg=msg)
+		else:
+			msg = 'Upload failed. File type is probably not allowed.'
+			return render_template('file-upload-message.html', msg=msg)	
+			
+			
+@app.route('/file-delete', methods=['GET', 'POST'])
+@login_required
+def file_delete():
+	global exp_name_global
+	if config['EditsAllowed'] != 1:
+		return render_template('feature-disabled.html')
+	if metadata[exp_name_global][10] == 0:
+		msg = 'No files to delete.'
+		return render_template('file-upload-message.html', msg=msg)
+	if request.method == 'GET':
+		filenames = os.listdir('files/'+exp_name_global)
+		filenames_df = pd.DataFrame(filenames, columns=['Filename'])
+		table_html = filenames_df.to_html()
+		form = FileDeleteForm()
+		return render_template('file-delete-page.html', table_html=table_html, form=form)
+	else:
+		form = FileDeleteForm(request.form)
+		if form.validate():
+			filenames = os.listdir('files/'+exp_name_global)
+			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
+			if form.data['identifier'] >= len(filenames_df['Filename']) or form.data['identifier'] < 0:
+				msg = 'Delete failed. Invalid identifier.'
+				return render_template('file-upload-message.html', msg=msg)
+			os.remove('files/'+exp_name_global+'/'+filenames_df['Filename'][form.data['identifier']])
+			metadata[exp_name_global][10]-=1
+			with open('metadata.json', 'w') as outfile:
+				json.dump(metadata, outfile)
+			msg = 'File deleted.'
+			return render_template('file-upload-message.html', msg=msg)
+		else:
+			filenames = os.listdir('files/'+exp_name_global)
+			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
+			table_html = filenames_df.to_html()		
+			return render_template('file-delete-page.html', table_html=table_html, form=form)
+			
+	
 @app.route('/new-condition', methods=['GET', 'POST'])
 @login_required
 def new_condition():
@@ -450,6 +517,8 @@ def new_condition():
 			with open('processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
 			return redirect(url_for('processed_data'))
+		else:
+			return render_template('new-condition.html', form=form, name=exp_name_global)
 
 
 @app.route('/delete-experiment', methods=['GET', 'POST'])
@@ -470,7 +539,9 @@ def delete_experiment():
 			with open('metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			with open('processed_data.json', 'w') as outfile:
-				json.dump(proc_data, outfile)			
+				json.dump(proc_data, outfile)
+			if os.path.isdir('files/'+exp_name_global):
+				rmtree('files/'+exp_name_global)		
 			msg='Deleted experiment '+exp_name_global
 			return render_template('upload-message.html', msg=msg)
 		else:
@@ -492,16 +563,16 @@ def new_experiment():
 	else:
 		form = NewMetadataForm(request.form)
 		if form.validate():
-			if g.user.id+':'+form.data['exp_id'] in metadata.keys():
+			if g.user.id+'-'+form.data['exp_id'] in metadata.keys():
 				return render_template('upload-message.html', msg='Experiment ID already exists')	
-			exp_name_global = g.user.id+':'+form.data['exp_id']	
-			metadata[g.user.id+':'+form.data['exp_id']] = [
+			exp_name_global = g.user.id+'-'+form.data['exp_id']	
+			metadata[g.user.id+'-'+form.data['exp_id']] = [
 				g.user.id, form.data['exp_id'], str(form.data['exp_date']),
 				str(form.data['animal_date']), form.data['experimenter'],
 				form.data['lab'], form.data['temp'], form.data['species'],
 				form.data['saline'], 1, 0, form.data['notes']]
-			proc_data[g.user.id+':'+form.data['exp_id']+'0'] = [None]*29
-			proc_data[g.user.id+':'+form.data['exp_id']+'0'][0]='baseline'
+			proc_data[g.user.id+'-'+form.data['exp_id']+'0'] = [None]*29
+			proc_data[g.user.id+'-'+form.data['exp_id']+'0'][0]='baseline'
 			with open('metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			with open('processed_data.json', 'w') as outfile:

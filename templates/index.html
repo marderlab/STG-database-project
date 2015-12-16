@@ -2,14 +2,13 @@
 <!doctype html>
 <head>
   <meta charset="utf-8">
-  <title>Pyloric Data Warehouse</title>
+  <title>STG Data Warehouse</title>
 </head>
 <div class=page>
-  <h3>Welcome to the Pyloric Data Warehouse!</h3>
-  <h3>This is the HOME PAGE!!</h3>
+  <h3>Welcome to the STG Data Warehouse!</h3>
   {% if current_user.is_authenticated %}
-  	<h3>You are currently signed in as {{ current_user.id }}</h3>
-  	<h3>Your email is {{ current_user.email }} and your lab is {{ current_user.lab }}</h3>
+  	<h4>You are currently signed in as {{ current_user.id }}</h4>
+  	<h4>Your registered email is: {{ current_user.email }}. Your lab is: {{ current_user.lab }}.</h4>
   	 {% if current_user.id == "Admin" %}
       <p><a href="{{ url_for('admin_page') }}">Admin Page </a></p>  
      {% else %}
@@ -24,6 +23,6 @@
   {% endif %}
     <body>
     <p><a href="{{ url_for('download_page') }}">Download Page (no log-in required)</a></p>
-    <p><a href="{{ url_for('upload_page') }}">Upload Page (must be signed-in)</a></p>  
+    <p><a href="{{ url_for('upload_page') }}">My Experiments Page (must be signed-in)</a></p>  
   </body>
 </div>

@@ -2,7 +2,7 @@
 <!doctype html>
 <head>
   <meta charset="utf-8">
-  <title>Pyloric Data Warehouse</title>
+  <title>STG Data Warehouse</title>
 </head>
 <div class=page>
   <h3>Log in:</h3>
@@ -11,4 +11,5 @@
     <div>{{ form.password.label }}: {{ form.password() }}</div>
     <p><input type=submit value=Submit>
   </form>
+  <p><a href="{{ url_for('index') }}">Nevermind, back to home</a></p>    
 </div>
