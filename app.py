@@ -46,7 +46,7 @@ with open('user_database.json') as json_data:
 with open('config.json') as json_data:
 	config = json.load(json_data)
 	json_data.close()
-	
+		
 	
 with open('metadata.json') as json_data:
 	metadata = json.load(json_data)
@@ -373,9 +373,9 @@ def upload_page():
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
 		metadata_df=MakeMetaDF(metadata)
-		metadata_df.index = range(len(metadata_df)) 
 		if g.user.id != 'Admin':
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]
+		metadata_df.index = range(len(metadata_df)) 	
 		df_no_notes = metadata_df.drop('Notes', axis=1)
 		table_html = df_no_notes.to_html()
 		form = UploadActionForm()
@@ -383,9 +383,9 @@ def upload_page():
 	else:
 		form = UploadActionForm(request.form)
 		metadata_df=MakeMetaDF(metadata)
-		metadata_df.index = range(len(metadata_df)) 
 		if g.user.id != 'Admin':
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]	
+		metadata_df.index = range(len(metadata_df)) 	
 		if form.validate():
 			if form.data['identifier']<0 or form.data['identifier']>(len(metadata_df)-1) or form.data['identifier']==None:
 				return render_template('upload-message.html', msg='Invalid identifier')
@@ -468,10 +468,19 @@ def file_upload():
 	global exp_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	if metadata[exp_name_global][10] >= config['MaxFiles']:
+		msg = 'Cannot upload more files, reached maximum for this experiment.'
+		return render_template('file-upload-message.html', msg=msg)
 	if request.method == 'GET':
 		return render_template('file-upload-page.html', name=exp_name_global)
 	else:
 		file = request.files['file']
+		file.seek(0, os.SEEK_END)
+		file_length = file.tell()
+		print(file_length)
+		if file_length > config['MaxFilesizeMB']*1e6:
+			msg = 'Cannot upload, file too large'
+			return render_template('file-upload-message.html', msg=msg)
 		if file and allowed_file(file.filename):
 			filename = secure_filename(file.filename)
 			file.save('files/'+exp_name_global+'/'+filename)
@@ -614,6 +623,9 @@ def new_experiment():
 	global cond_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	user_experiment_count = sum([g.user.id in key for key in metadata.keys()])
+	if user_experiment_count >= config['MaxUserExperiments']:
+		return render_template('upload-message.html', msg='You cannot create any more experiments (reached user maximum)')
 	if request.method == 'GET':
 		form = NewMetadataForm()
 		return render_template('new-experiment.html', name=g.user.id, form=form)
@@ -797,6 +809,8 @@ def admin_page():
 		return redirect(url_for('index'))
 	if request.method == "GET":
 		users_df = MakeDF(user_database, ['Email', 'Surname', 'Lab'])
+		for username in user_database.keys():
+			users_df.loc[username, 'Experiments'] = sum([username in key for key in metadata.keys()])
 		table_html = users_df.to_html()
 		form = AdminActionForm()
 		return render_template('admin-page.html', table_html=table_html, \
