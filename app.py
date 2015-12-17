@@ -4,7 +4,16 @@ Created on Tue Dec  8 14:02:36 2015
 
 STG Database Web Server
 
-@author: alhamood
+This python app runs a database server specifically designed for collecting data from
+preparations of the stomatogastric ganglion (STG). It manages user accounts, allows
+entry of experimental data for experiments containing many conditions, and allows file
+uploads to be associated with experiments (for example of raw data). 
+
+Detailed descriptions for users and administrators in the associated readme file.
+
+Original code respository @ https://github.com/alhamood/STG-database-project
+
+@author: Albert W. Hamood
 """
 
 from flask import Flask, render_template, request, redirect, url_for, g, make_response, send_from_directory
@@ -22,9 +31,11 @@ import flask.ext.login
 import simplejson as json
 import pandas as pd
 
+# Initialize application using the Flask module
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
+
 global editusername_global
 global exp_name_global
 global cond_num_global
@@ -33,6 +44,8 @@ global cond_name_global
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
 app.logger.setLevel(logging.ERROR)
 
+# The following bits load in databases for users, metadata, and processed data
+# as well as for basic web server configuration
 with open('config.json') as json_data:
 	config = json.load(json_data)
 	json_data.close()
@@ -57,11 +70,12 @@ with open('databases/processed_data.json') as json_data:
 	proc_data = json.load(json_data)
 	json_data.close()
 	
-
+# Basic user class, required for Flask-Login which handles user sessions
 class User(UserMixin):
 	pass
 
 
+# These classes handle forms that are passed to html templates using WTForms
 class LoginForm(Form):
 	username = fields.TextField('Username')
 	password = fields.PasswordField('Password')
@@ -207,7 +221,8 @@ class ProcessedDataForm(Form):
 	mg_off = fields.DecimalField('Gastric MG off phase (0-1, from LG start)', [validators.Optional()])
 	mg_spikes = fields.DecimalField('Gastric MG spikes/burst', [validators.Optional()])	
 	
-			
+
+# Functions for making dataframes from databases to serve in html templates			
 def MakeDF(data, column_names):
 	df = pd.DataFrame(data.values(), columns = column_names)
 	df.index = user_database.keys()	
@@ -239,12 +254,14 @@ def MakeCondDF(data):
 	
 	
 def allowed_file(filename):
+	# Implements check of filename extensions specified in config.json
 	allowed_exts = set(config['AllowedFiletypes'])
 	return '.' in filename and filename.rsplit('.', 1)[1] in allowed_exts
 
 
 @login_manager.user_loader
 def load_user(user_id):
+	# Populates user instance for Flask.Login user handling on login
 	if user_id not in user_database:
 		return
 	user = User()
@@ -258,11 +275,13 @@ def load_user(user_id):
 
 @login_manager.unauthorized_handler
 def nope():
+	# Flask redirects here when a @login_required page fails authentication check
 	return render_template('unauthorized-page.html')
 
 
 @app.route('/login', methods=['POST'])
 def login():
+	# Checks password and logs in user if credentials are valid
 	global editusername_global
 	form = LoginForm(request.form)
 	if form.validate():
@@ -279,6 +298,7 @@ def login():
 
 @app.route('/download-page')
 def download_page():
+	# Directs to download page
 	if config['DownloadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	return render_template('download-page.html')
@@ -286,6 +306,7 @@ def download_page():
 
 @app.route('/dl-files-page', methods = ['GET', 'POST'])
 def dl_files_page():
+	# Directs to file download page
 	global exp_name_global
 	if config['DownloadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
@@ -295,17 +316,15 @@ def dl_files_page():
 	metadata_df.index = range(len(metadata_df))		
 	if request.method == 'POST':
 		form = FileDownloadForm(request.form)
-		print('hello!!')
 		if form.data['identifier']>=0 and form.data['identifier']<len(metadata_df):
 			exp_name_global = metadata_df.loc[form.data['identifier']]['User']+'-'+metadata_df.loc[form.data['identifier']]['Exp ID']
-			print(exp_name_global)
-			print('hello')
 			return redirect(url_for('file_download'))
 	form = FileDownloadForm()
 	table_html = metadata_df.to_html()
 	return render_template('dl-files-page.html', table_html=table_html, form=form)
 
-	
+
+#Following routes direct to various downloads, as described
 @app.route('/dl-metadata-page')
 def dl_metadata_page():
 	if config['DownloadsAllowed'] != 1:
@@ -368,6 +387,13 @@ def dl_procdata_json():
 @app.route('/upload-page', methods=['GET', 'POST'])
 @login_required
 def upload_page():
+	""" 
+	Also referred to as "experiment page".
+	
+	This function shows users their uploaded experiments and allows them to 
+	edit or delete them, and also to create new experiments
+	"""
+	
 	global exp_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
@@ -375,20 +401,20 @@ def upload_page():
 		return render_template('user-uploads-disabled.html')
 	if request.method == 'GET':
 		metadata_df=MakeMetaDF(metadata)
-		if g.user.id != 'Admin':
+		if g.user.id != 'Admin':	# Admin can see all experiments
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]
 		metadata_df.index = range(len(metadata_df)) 	
-		df_no_notes = metadata_df.drop('Notes', axis=1)
+		df_no_notes = metadata_df.drop('Notes', axis=1)	# Don't show notes here
 		table_html = df_no_notes.to_html()
 		form = UploadActionForm()
 		return render_template('upload-page.html', table_html=table_html, form=form)
 	else:
 		form = UploadActionForm(request.form)
 		metadata_df=MakeMetaDF(metadata)
-		if g.user.id != 'Admin':
+		if g.user.id != 'Admin':	
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]	
 		metadata_df.index = range(len(metadata_df)) 	
-		if form.validate():
+		if form.validate():		# Checks for valid form entry
 			if form.data['identifier']<0 or form.data['identifier']>(len(metadata_df)-1) or form.data['identifier']==None:
 				return render_template('upload-message.html', msg='Invalid identifier')
 			exp_name_global = metadata_df.loc[form.data['identifier'], 'User']+'-'+metadata_df.loc[form.data['identifier'], 'Exp ID']	
@@ -398,7 +424,7 @@ def upload_page():
 				return redirect(url_for('edit_metadata'))
 			if form.data['action'] == 'delete':
 				return redirect(url_for('delete_experiment'))
-		else:
+		else:	# sends back to template with errors if form did not validate
 			metadata_df=MakeMetaDF(metadata)
 			if g.user.id != 'Admin':
 				metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]	
@@ -411,6 +437,13 @@ def upload_page():
 @app.route('/experiment-page', methods=['GET', 'POST'])
 @login_required
 def experiment_page():
+	"""
+	This page allows editing of a particular experiment.
+	
+	This includes uploading associated files, editing metadata, or adding/editing/deleting
+	conditions
+	"""
+	
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	if user_database[g.user.id][3] == 0:
@@ -477,6 +510,7 @@ def experiment_page():
 @app.route('/file-upload', methods=['GET', 'POST'])
 @login_required
 def file_upload():
+	# Manages file uploads
 	global exp_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
@@ -509,8 +543,8 @@ def file_upload():
 
 
 @app.route('/file-download', methods=['GET', 'POST'])
-@login_required
 def file_download():
+	# Manages file downloads
 	global exp_name_global
 	if metadata[exp_name_global][10] == 0:
 		msg = 'No files to download.'
@@ -540,6 +574,7 @@ def file_download():
 @app.route('/file-delete', methods=['GET', 'POST'])
 @login_required
 def file_delete():
+	# Manages file deletion
 	global exp_name_global
 	if config['EditsAllowed'] != 1:
 		return render_template('feature-disabled.html')
@@ -576,6 +611,7 @@ def file_delete():
 @app.route('/new-condition', methods=['GET', 'POST'])
 @login_required
 def new_condition():
+	# From experiment page, adds a new condition
 	global exp_name_global
 	global cond_name_global
 	global cond_num_global
@@ -602,6 +638,7 @@ def new_condition():
 @app.route('/delete-experiment', methods=['GET', 'POST'])
 @login_required
 def delete_experiment():
+	# From upload/experiments page, deletes experiment and files
 	global exp_name_global
 	if config['EditsAllowed'] != 1:
 		return render_template('feature-disabled.html')
@@ -632,6 +669,7 @@ def delete_experiment():
 @app.route('/new-experiment', methods=['GET', 'POST'])
 @login_required
 def new_experiment():
+	# From experiments / upload page, defines a new experiment
 	global exp_name_global
 	global cond_num_global
 	global cond_name_global
@@ -672,6 +710,7 @@ def new_experiment():
 @app.route('/edit-metadata', methods=['GET', 'POST'])
 @login_required
 def edit_metadata():
+	# From upload/experiments page, edits metadata for selected experiment
 	global exp_name_global
 	if config['EditsAllowed'] != 1:
 		return render_template('feature-disabled.html')
@@ -743,6 +782,7 @@ def processed_data():
 
 @app.route('/new-user', methods=['GET', 'POST'])
 def new_user():
+	# Create new user
 	if config['NewUsersAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
@@ -759,7 +799,7 @@ def new_user():
 				return render_template('username-collision.html')
 			user_database[form.data['username']] = \
 				[form.data['email'], form.data['surname'],
-				form.data['lab'], 0]
+				form.data['lab'], 0]	# Trailing 0 sets upload flag to false for new users
 			user_pdatabase[form.data['username']] = \
 				(hashlib.sha256(form.data['password']).hexdigest())
 			with open('databases/user_database.json', 'w') as outfile:
@@ -824,6 +864,7 @@ def password_change():
 @app.route('/admin-page', methods=['GET', 'POST'])
 @login_required
 def admin_page():
+	# Manages administrator control over users, including deletion and upload activation
 	global editusername_global
 	if g.user.id != "Admin":
 		return redirect(url_for('index'))
@@ -906,4 +947,7 @@ if __name__ == '__main__':
 	app.config["SECRET_KEY"] = "ITSASECRET"
 	port = int(os.environ.get("PORT", 5000))
 	app.run(host='0.0.0.0', port=port, debug=False)
-	#app.run(host='0.0.0.0', port=port, debug=True, ssl_context='adhoc')
+	# Do not run in debug mode if allowing external connections! Security risk.
+	
+	# Enable this line (instead of the app.run above) to use https: with an ad-hoc certificate
+	#app.run(host='0.0.0.0', port=port, debug=False, ssl_context='adhoc')
