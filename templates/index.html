@@ -12,7 +12,8 @@
   	<p>Your registered email is: {{ current_user.email }}. Your lab is: {{ current_user.lab }}.</p>
   	 {% if current_user.id == "Admin" %}
   	 <h3>Admin options:</h3>
-      <p><a href="{{ url_for('admin_page') }}">Admin Page </a></p>  
+      <p><a href="{{ url_for('admin_page') }}">Admin Page</a> (edit, delete, activate users)</p>  
+      <p><a href="{{ url_for('edit_user') }}">Edit admin info</a>
       <p><a href="{{ url_for('upload_page') }}">Experiments page</a></p>  
      {% else %}
      <h3>User options:</h3>
@@ -28,5 +29,10 @@
   {% endif %}
     <body>
     <p>View and <a href="{{ url_for('download_page') }}">download data</a></p>
+    <p>
+    <p>
+	Need assistance? 
+	<a href="mailto:{{emailaddress}}?Subject=STG%20database%20server" target="_top">Email administrator</a>
+	</p>
   </body>
 </div>

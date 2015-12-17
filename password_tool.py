@@ -19,11 +19,11 @@ new_password = getpass.getpass('New Admin password: ')
 confirm = getpass.getpass('Confirm new password: ')
 
 if new_password == confirm:
-	with open('user_pdatabase.json') as json_data:
+	with open('databases/user_pdatabase.json') as json_data:
 		user_pdatabase = json.load(json_data)
 		json_data.close()
 	user_pdatabase['Admin']=hashlib.sha256(new_password).hexdigest()
-	with open('user_pdatabase.json', 'w') as outfile:
+	with open('databases/user_pdatabase.json', 'w') as outfile:
 		json.dump(user_pdatabase, outfile)
 	print('Password reset.')
 else:

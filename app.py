@@ -33,27 +33,27 @@ global cond_name_global
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
 app.logger.setLevel(logging.ERROR)
 
-with open('user_pdatabase.json') as json_data:
+with open('config.json') as json_data:
+	config = json.load(json_data)
+	json_data.close()
+
+
+with open('databases/user_pdatabase.json') as json_data:
 	user_pdatabase = json.load(json_data)
 	json_data.close()
 
 
-with open('user_database.json') as json_data:
+with open('databases/user_database.json') as json_data:
 	user_database = json.load(json_data)
-	json_data.close()
-	
-	
-with open('config.json') as json_data:
-	config = json.load(json_data)
 	json_data.close()
 		
 	
-with open('metadata.json') as json_data:
+with open('databases/metadata.json') as json_data:
 	metadata = json.load(json_data)
 	json_data.close()
 	
 	
-with open('processed_data.json') as json_data:
+with open('databases/processed_data.json') as json_data:
 	proc_data = json.load(json_data)
 	json_data.close()
 	
@@ -112,11 +112,11 @@ class DeleteForm(Form):
 	
 	
 class AdminActionForm(Form):
-	username = fields.TextField('Username', [
-		validators.AnyOf(user_database.keys())])
+	username = fields.TextField('Username')
 	action = fields.SelectField('Action', choices = [
 		('edit', 'Edit User'), ('delete', 'Delete User'),
-		('password', 'Reset Password')])
+		('password', 'Reset Password'), ('activate', 'Activate User Uploads'),
+		('deactivate', 'Deactivate User Uploads')])
 		
 		
 class UploadActionForm(Form):
@@ -239,7 +239,7 @@ def MakeCondDF(data):
 	
 	
 def allowed_file(filename):
-	allowed_exts = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'abf', 's2r'])
+	allowed_exts = set(config['AllowedFiletypes'])
 	return '.' in filename and filename.rsplit('.', 1)[1] in allowed_exts
 
 
@@ -371,6 +371,8 @@ def upload_page():
 	global exp_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	if user_database[g.user.id][3] == 0:
+		return render_template('user-uploads-disabled.html')
 	if request.method == 'GET':
 		metadata_df=MakeMetaDF(metadata)
 		if g.user.id != 'Admin':
@@ -396,6 +398,14 @@ def upload_page():
 				return redirect(url_for('edit_metadata'))
 			if form.data['action'] == 'delete':
 				return redirect(url_for('delete_experiment'))
+		else:
+			metadata_df=MakeMetaDF(metadata)
+			if g.user.id != 'Admin':
+				metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]	
+			metadata_df.index = range(len(metadata_df))
+			df_no_notes = metadata_df.drop('Notes', axis=1)
+			table_html = df_no_notes.to_html()			
+			return render_template('upload-page.html', table_html=table_html, form=form)	
 				
 				
 @app.route('/experiment-page', methods=['GET', 'POST'])
@@ -403,6 +413,8 @@ def upload_page():
 def experiment_page():
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	if user_database[g.user.id][3] == 0:
+		return render_template('user-uploads-disabled.html')		
 	global exp_name_global
 	global cond_num_global
 	global cond_name_global
@@ -413,10 +425,10 @@ def experiment_page():
 		conditions_df.index = range(len(conditions_df))
 		table_html = conditions_df.to_html()
 		form = ExperimentActionForm()
-		if not os.path.isdir('files/'+exp_name_global):
-			os.mkdir('files/'+exp_name_global)
+		if not os.path.isdir(config['FilePath']+exp_name_global):
+			os.mkdir(config['FilePath']+exp_name_global)
 		if metadata[exp_name_global][10] > 0:
-			filenames = os.listdir('files/'+exp_name_global)
+			filenames = os.listdir(config['FilePath']+exp_name_global)
 			filecount = metadata[exp_name_global][10]
 		else:
 			filenames = None
@@ -441,9 +453,9 @@ def experiment_page():
 				for condnum in range(form.data['identifier']+1, metadata[exp_name_global][9]):
 					proc_data[exp_name_global+str(condnum-1)]=proc_data.pop(exp_name_global+str(condnum))
 				metadata[exp_name_global][9]-=1
-				with open('metadata.json', 'w') as outfile:
+				with open('databases/metadata.json', 'w') as outfile:
 					json.dump(metadata, outfile)
-				with open('processed_data.json', 'w') as outfile:
+				with open('databases/processed_data.json', 'w') as outfile:
 					json.dump(proc_data, outfile)
 				msg='Condition '+cond_name_global+' deleted.'
 				return render_template('experiment-message.html', msg=msg)
@@ -454,7 +466,7 @@ def experiment_page():
 			conditions_df.index = range(len(conditions_df))
 			table_html = conditions_df.to_html()
 			if metadata[exp_name_global][10] > 0:
-				filenames = os.listdir('files/'+exp_name_global)
+				filenames = os.listdir(config['FilePath']+exp_name_global)
 				filecount = metadata[exp_name_global][10]
 			else:
 				filenames = None
@@ -468,6 +480,8 @@ def file_upload():
 	global exp_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	if user_database[g.user.id][3] == 0:
+		return render_template('user-uploads-disabled.html')		
 	if metadata[exp_name_global][10] >= config['MaxFiles']:
 		msg = 'Cannot upload more files, reached maximum for this experiment.'
 		return render_template('file-upload-message.html', msg=msg)
@@ -483,9 +497,9 @@ def file_upload():
 			return render_template('file-upload-message.html', msg=msg)
 		if file and allowed_file(file.filename):
 			filename = secure_filename(file.filename)
-			file.save('files/'+exp_name_global+'/'+filename)
+			file.save(config['FilePath']+exp_name_global+'/'+filename)
 			metadata[exp_name_global][10]+=1
-			with open('metadata.json', 'w') as outfile:
+			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			msg = 'Successfully uploaded '+filename
 			return render_template('file-upload-message.html', msg=msg)
@@ -498,13 +512,11 @@ def file_upload():
 @login_required
 def file_download():
 	global exp_name_global
-	if config['EditsAllowed'] != 1:
-		return render_template('feature-disabled.html')
 	if metadata[exp_name_global][10] == 0:
 		msg = 'No files to download.'
 		return render_template('download-message.html', msg=msg)
 	if request.method == 'GET':
-		filenames = os.listdir('files/'+exp_name_global)
+		filenames = os.listdir(config['FilePath']+exp_name_global)
 		filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 		table_html = filenames_df.to_html()
 		form = FileDownloadForm()
@@ -512,14 +524,14 @@ def file_download():
 	else:
 		form = FileDownloadForm(request.form)
 		if form.validate():
-			filenames = os.listdir('files/'+exp_name_global)
+			filenames = os.listdir(config['FilePath']+exp_name_global)
 			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 			if form.data['identifier'] >= len(filenames_df['Filename']) or form.data['identifier'] < 0:
 				msg = 'Download failed. Invalid identifier.'
 				return render_template('download-message.html', msg=msg)
-			return send_from_directory('files/'+exp_name_global+'/', filenames_df['Filename'][form.data['identifier']], as_attachment=True)
+			return send_from_directory(config['FilePath']+exp_name_global+'/', filenames_df['Filename'][form.data['identifier']], as_attachment=True)
 		else:
-			filenames = os.listdir('files/'+exp_name_global)
+			filenames = os.listdir(config['FilePath']+exp_name_global)
 			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 			table_html = filenames_df.to_html()		
 			return render_template('file-delete-page.html', table_html=table_html, form=form)			
@@ -535,7 +547,7 @@ def file_delete():
 		msg = 'No files to delete.'
 		return render_template('file-upload-message.html', msg=msg)
 	if request.method == 'GET':
-		filenames = os.listdir('files/'+exp_name_global)
+		filenames = os.listdir(config['FilePath']+exp_name_global)
 		filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 		table_html = filenames_df.to_html()
 		form = FileDeleteForm()
@@ -543,19 +555,19 @@ def file_delete():
 	else:
 		form = FileDeleteForm(request.form)
 		if form.validate():
-			filenames = os.listdir('files/'+exp_name_global)
+			filenames = os.listdir(config['FilePath']+exp_name_global)
 			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 			if form.data['identifier'] >= len(filenames_df['Filename']) or form.data['identifier'] < 0:
 				msg = 'Delete failed. Invalid identifier.'
 				return render_template('file-upload-message.html', msg=msg)
-			os.remove('files/'+exp_name_global+'/'+filenames_df['Filename'][form.data['identifier']])
+			os.remove(config['FilePath']+exp_name_global+'/'+filenames_df['Filename'][form.data['identifier']])
 			metadata[exp_name_global][10]-=1
-			with open('metadata.json', 'w') as outfile:
+			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			msg = 'File deleted.'
 			return render_template('file-upload-message.html', msg=msg)
 		else:
-			filenames = os.listdir('files/'+exp_name_global)
+			filenames = os.listdir(config['FilePath']+exp_name_global)
 			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 			table_html = filenames_df.to_html()		
 			return render_template('file-delete-page.html', table_html=table_html, form=form)
@@ -578,9 +590,9 @@ def new_condition():
 			proc_data[exp_name_global+cond_num_global] = [None]*29
 			proc_data[exp_name_global+cond_num_global][0]=cond_name_global
 			metadata[exp_name_global][9]+=1
-			with open('metadata.json', 'w') as outfile:
+			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
-			with open('processed_data.json', 'w') as outfile:
+			with open('databases/processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
 			return redirect(url_for('processed_data'))
 		else:
@@ -593,6 +605,8 @@ def delete_experiment():
 	global exp_name_global
 	if config['EditsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	if user_database[g.user.id][3] == 0:
+		return render_template('user-uploads-disabled.html')	
 	if request.method == 'GET':
 		form = DeleteForm()
 		return render_template('delete-experiment.html', name=exp_name_global, form=form)
@@ -602,12 +616,12 @@ def delete_experiment():
 			for condnum in range(metadata[exp_name_global][9]):
 				proc_data.pop(exp_name_global+str(condnum))
 			metadata.pop(exp_name_global)	
-			with open('metadata.json', 'w') as outfile:
+			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
-			with open('processed_data.json', 'w') as outfile:
+			with open('databases/processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
-			if os.path.isdir('files/'+exp_name_global):
-				rmtree('files/'+exp_name_global)		
+			if os.path.isdir(config['FilePath']+exp_name_global):
+				rmtree(config['FilePath']+exp_name_global)		
 			msg='Deleted experiment '+exp_name_global
 			return render_template('upload-message.html', msg=msg)
 		else:
@@ -623,6 +637,8 @@ def new_experiment():
 	global cond_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	if user_database[g.user.id][3] == 0:
+		return render_template('user-uploads-disabled.html')		
 	user_experiment_count = sum([g.user.id in key for key in metadata.keys()])
 	if user_experiment_count >= config['MaxUserExperiments']:
 		return render_template('upload-message.html', msg='You cannot create any more experiments (reached user maximum)')
@@ -642,9 +658,9 @@ def new_experiment():
 				form.data['saline'], 1, 0, form.data['notes']]
 			proc_data[g.user.id+'-'+form.data['exp_id']+'0'] = [None]*29
 			proc_data[g.user.id+'-'+form.data['exp_id']+'0'][0]='baseline'
-			with open('metadata.json', 'w') as outfile:
+			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
-			with open('processed_data.json', 'w') as outfile:
+			with open('databases/processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
 			cond_num_global = '0'
 			cond_name_global = 'baseline'
@@ -659,6 +675,8 @@ def edit_metadata():
 	global exp_name_global
 	if config['EditsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	if user_database[g.user.id][3] == 0:
+		return render_template('user-uploads-disabled.html')		
 	if request.method == 'GET':
 		data = metadata[exp_name_global]
 		form = MetadataForm(experimenter=data[4], notes=data[11],
@@ -675,7 +693,7 @@ def edit_metadata():
 			metadata[exp_name_global][7] = form.data['species']
 			metadata[exp_name_global][8] = form.data['saline']
 			metadata[exp_name_global][11] = form.data['notes']
-			with open('metadata.json', 'w') as outfile:
+			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			return redirect(url_for('upload_page'))
 		else:
@@ -687,6 +705,8 @@ def edit_metadata():
 def processed_data():
 	if config['EditsAllowed'] != 1:
 		return render_template('feature-disabled.html')
+	if user_database[g.user.id][3] == 0:
+		return render_template('user-uploads-disabled.html')		
 	global exp_name_global
 	global cond_num_global
 	global cond_name_global
@@ -714,7 +734,7 @@ def processed_data():
 				form.data['dg_on'], form.data['dg_off'], form.data['dg_spikes'],
 				form.data['gm_on'], form.data['gm_off'], form.data['gm_spikes'],
 				form.data['mg_on'], form.data['mg_off'], form.data['mg_spikes']]
-			with open('processed_data.json', 'w') as outfile:
+			with open('databases/processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
 			return redirect(url_for('experiment_page'))
 		else:
@@ -739,12 +759,12 @@ def new_user():
 				return render_template('username-collision.html')
 			user_database[form.data['username']] = \
 				[form.data['email'], form.data['surname'],
-				form.data['lab']]
+				form.data['lab'], 0]
 			user_pdatabase[form.data['username']] = \
 				(hashlib.sha256(form.data['password']).hexdigest())
-			with open('user_database.json', 'w') as outfile:
+			with open('databases/user_database.json', 'w') as outfile:
 				json.dump(user_database, outfile)
-			with open('user_pdatabase.json', 'w') as outfile:
+			with open('databases/user_pdatabase.json', 'w') as outfile:
 				json.dump(user_pdatabase, outfile)
 			user = load_user(form.data['username'])
 			flask.ext.login.login_user(user)
@@ -770,7 +790,7 @@ def edit_user():
 			user_database[editusername_global] = \
 				[form.data['email'], form.data['surname'],
 				form.data['lab']]
-			with open('user_database.json', 'w') as outfile:
+			with open('databases/user_database.json', 'w') as outfile:
 				json.dump(user_database, outfile)
 			return redirect(url_for('index'))
 		else:
@@ -796,7 +816,7 @@ def password_change():
 		else:
 			user_pdatabase[editusername_global] = \
 				(hashlib.sha256(form.data['password']).hexdigest())
-			with open('user_pdatabase.json', 'w') as outfile:
+			with open('databases/user_pdatabase.json', 'w') as outfile:
 				json.dump(user_pdatabase, outfile)	
 			return redirect(url_for('index'))
 
@@ -808,7 +828,7 @@ def admin_page():
 	if g.user.id != "Admin":
 		return redirect(url_for('index'))
 	if request.method == "GET":
-		users_df = MakeDF(user_database, ['Email', 'Surname', 'Lab'])
+		users_df = MakeDF(user_database, ['Email', 'Surname', 'Lab', 'UploadFlag'])
 		for username in user_database.keys():
 			users_df.loc[username, 'Experiments'] = sum([username in key for key in metadata.keys()])
 		table_html = users_df.to_html()
@@ -816,9 +836,10 @@ def admin_page():
 		return render_template('admin-page.html', table_html=table_html, \
 			form=form)
 	else:
-		form = AdminActionForm(request.form)		
+		form = AdminActionForm(request.form)
+		users_df = MakeDF(user_database, ['Email', 'Surname', 'Lab', 'UploadFlag'])
 		if not form.validate():
-			users_df = MakeDF(user_database, ['Email', 'Surname', 'Lab'])
+			print(form.errors)
 			table_html = users_df.to_html()
 			return render_template('admin-page.html', \
 				table_html=table_html, form=form)
@@ -831,9 +852,9 @@ def admin_page():
 			else:
 				user_database.pop(form.data['username'])
 				user_pdatabase.pop(form.data['username'])
-				with open('user_database.json', 'w') as outfile:
+				with open('databases/user_database.json', 'w') as outfile:
 					json.dump(user_database, outfile)
-				with open('user_pdatabase.json', 'w') as outfile:
+				with open('databases/user_pdatabase.json', 'w') as outfile:
 					json.dump(user_pdatabase, outfile)
 				msg = 'User ' + form.data['username'] + ' deleted.'
 			return render_template('admin-message.html', msg=msg)
@@ -847,17 +868,26 @@ def admin_page():
 			new_random_password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
 			user_pdatabase[form.data['username']] = \
 				(hashlib.sha256(new_random_password).hexdigest())
-			with open('user_pdatabase.json', 'w') as outfile:
+			with open('databases/user_pdatabase.json', 'w') as outfile:
 				json.dump(user_pdatabase, outfile)
 			msg = ('Password for '+form.data['username']+' set to '+new_random_password)
 			msg2 = ('\nPlease email this password to '+user_database[form.data['username']][0])
-			return render_template('admin-message.html', msg=msg+msg2)			
-		return redirect(url_for('new_user'))
+			return render_template('admin-message.html', msg=msg+msg2)
+		if form.data['action'] == 'activate':
+			user_database[form.data['username']][3] = 1
+			with open('databases/user_database.json', 'w') as outfile:
+				json.dump(user_database, outfile)
+			return render_template('admin-message.html', msg=form.data['username']+' can now upload data.')			
+		if form.data['action'] == 'deactivate':
+			user_database[form.data['username']][3] = 0
+			with open('databases/user_database.json', 'w') as outfile:
+				json.dump(user_database, outfile)
+			return render_template('admin-message.html', msg=form.data['username']+' can no longer upload data.')
 
 
 @app.route('/')
 def index():
-	return render_template('index.html')
+	return render_template('index.html', emailaddress = user_database['Admin'][0])
 
 
 @app.route('/sign-in')
@@ -875,5 +905,5 @@ def sign_out():
 if __name__ == '__main__':
 	app.config["SECRET_KEY"] = "ITSASECRET"
 	port = int(os.environ.get("PORT", 5000))
-	app.run(host='0.0.0.0', port=port, debug=True)
+	app.run(host='0.0.0.0', port=port, debug=False)
 	#app.run(host='0.0.0.0', port=port, debug=True, ssl_context='adhoc')

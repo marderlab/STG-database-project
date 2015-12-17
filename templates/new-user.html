@@ -6,6 +6,8 @@
 </head>
 <div class=page>
   <h3>Enter information below to set up new user:</h3>
+  <h4>IMPORTANT NOTE: You will not have upload privileges until the administrator approves your account.</h4>
+  <h4>After creating your account please send an email to the Administrator with your username to gain upload access.</h4>
   <form method="post" action="/new-user"> 
     <div>{{ form.username.label }}: {{ form.username(class="css_class") }}</div>
       {% for error in form.username.errors %}
