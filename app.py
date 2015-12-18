@@ -158,6 +158,7 @@ class FileDownloadForm(Form):
 class NewConditionForm(Form):
 	name = fields.TextField('Condition Name', [
 		validators.length(min=2, max=15, message='2-15 characters'),
+		validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
 		validators.InputRequired(message='Must enter a condition name')])
 
 		
@@ -170,13 +171,18 @@ class MetadataForm(Form):
 		validators.Length(max=15, message='15 characters max')])
 	lab = fields.TextField('Lab PI Surname', [
 		validators.Length(max=15, message='15 characters max')])	
-	temp = fields.IntegerField('Temperature in C', [validators.Optional()])
-	species = fields.SelectField('Species', choices = [
-		('crab', 'Crab'), ('lobster', 'Lobster')])
+	temp = fields.IntegerField('Experiment Baseline Temperature in C', [validators.Optional()])
+	tanktemp = fields.IntegerField('Animal Tank Temperature in C', [validators.Optional()])
+	species = fields.TextField('Species', [
+		validators.Length(max=15, message='15 characters max')])
 	saline = fields.SelectField('Saline', choices = [
-		('std', 'Standard'), ('alt', 'Altered (describe in notes)')])
+		('cancer-std', 'Cancer standard'), ('homarus-std', 'Homarus standard'),
+		('pand-std', 'Pan. standard'), ('alt', 'Altered (describe, or provide ref. in notes)')])
+	intra_sol = fields.SelectField('Intracellular solution', choices=[
+		('KCl', 'KCl'), ('KAcetate', 'KAcetate'), ('K2SO4', 'K2SO4'),
+		('Hooper', 'Hooper et al solution')])
 	notes = fields.TextAreaField('Purpose / Notes', [
-		validators.length(max=500, message='500 characters max')])
+		validators.length(max=1000, message='1000 characters max')])
 		
 
 class NewMetadataForm(MetadataForm):
@@ -187,6 +193,7 @@ class NewMetadataForm(MetadataForm):
 		
 		
 class ProcessedDataForm(Form):
+	temp = fields.IntegerField('Condition temperature in C', [validators.Optional()])
 	pyl_hz = fields.DecimalField('Pyloric frequency (Hz)', [validators.Optional()])
 	pyl_cycvar = fields.DecimalField('Pyloric cyc-to-cyc var (%)', [validators.Optional()])
 	pyl_niqr = fields.DecimalField('Pyloric frequency NIQR', [validators.Optional()])
@@ -257,14 +264,14 @@ def MakeDF(data, column_names):
 
 def MakeMetaDF(data):
 	column_names = ['User', 'Exp ID', 'Exp Date','Animal Date', 'Experimenter', 'Lab',
-		'Temp (C)', 'Species', 'Saline', 'Conditions', 'Files', 'Notes']
+		'Temp (C)', 'Tank Temp (C)', 'Species', 'Saline', 'Intra Sol.', 'Conditions', 'Files', 'Notes']
 	df = pd.DataFrame(data.values(), columns = column_names, index=data.keys())
 	df = df.sort_values(by='Exp Date')
 	return df
 	
 
 def MakeCondDF(data):
-	column_names = ['cond_name','pyl_hz','pyl_cycvar','pyl_niqr','gas_hz','gas_cycvar',
+	column_names = ['cond_name', 'temp', 'pyl_hz','pyl_cycvar','pyl_niqr','gas_hz','gas_cycvar',
 		'gas_niqr','pd_off','pd_spikes','lp_on','lp_off','lp_spikes','py_on','py_off',
 		'py_spikes','vd_on','vd_off','vd_spikes','lg_off','lg_spikes','dg_on','dg_off',
 		'dg_spikes','gm_on','gm_off','gm_spikes','mg_on','mg_off','mg_spikes', 'blank1',
@@ -386,11 +393,12 @@ def dl_procdata_page():
 	if config['DownloadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	procdata_df = MakeCondDF(proc_data)
+	procdata_df = procdata_df.dropna(axis=1, how='all')
 	table_html = procdata_df.to_html()
 	return render_template('dl-procdata-page.html', table_html=table_html)
 	
 	
-@app.route('/dc-procdata-csv')
+@app.route('/dl-procdata-csv')
 def dl_procdata_csv():
 	procdata_df = MakeCondDF(proc_data)
 	response = make_response(procdata_df.to_csv(index_label='cond_ID'))
@@ -398,7 +406,7 @@ def dl_procdata_csv():
 	return response
 	
 	
-@app.route('/dc-procdata-json')
+@app.route('/dl-procdata-json')
 def dl_procdata_json():
 	procdata_df = MakeCondDF(proc_data)
 	response = make_response(procdata_df.to_json())
@@ -480,13 +488,15 @@ def experiment_page():
 		conditions_df = conditions_df[conditions_df.index.str.contains(exp_name_global)]
 		conditions_df = conditions_df.sort_index()
 		conditions_df.index = range(len(conditions_df))
+		conditions_df = conditions_df.dropna(axis=1, how='all')
 		table_html = conditions_df.to_html()
 		form = ExperimentActionForm()
 		if not os.path.isdir(config['FilePath']+exp_name_global):
 			os.mkdir(config['FilePath']+exp_name_global)
-		if metadata[exp_name_global][10] > 0:
+		print(exp_name_global)
+		if metadata[exp_name_global][12] > 0:
 			filenames = os.listdir(config['FilePath']+exp_name_global)
-			filecount = metadata[exp_name_global][10]
+			filecount = metadata[exp_name_global][12]
 		else:
 			filenames = None
 			filecount = None
@@ -495,7 +505,7 @@ def experiment_page():
 	if request.method == 'POST':
 		form = ExperimentActionForm(request.form)
 		if form.validate():
-			if form.data['identifier']<0 or form.data['identifier']>metadata[exp_name_global][9]:
+			if form.data['identifier']<0 or form.data['identifier']>metadata[exp_name_global][11]:
 				return render_template('upload-message.html', msg='Invalid identifier')
 			if form.data['action'] == 'edit':
 				cond_num_global = str(form.data['identifier'])			
@@ -508,9 +518,9 @@ def experiment_page():
 				cond_num_global = str(form.data['identifier'])			
 				cond_name_global = proc_data[exp_name_global+cond_num_global][0]					
 				proc_data.pop(exp_name_global+cond_num_global)
-				for condnum in range(form.data['identifier']+1, metadata[exp_name_global][9]):
+				for condnum in range(form.data['identifier']+1, metadata[exp_name_global][11]):
 					proc_data[exp_name_global+str(condnum-1)]=proc_data.pop(exp_name_global+str(condnum))
-				metadata[exp_name_global][9]-=1
+				metadata[exp_name_global][11]-=1
 				with open('databases/metadata.json', 'w') as outfile:
 					json.dump(metadata, outfile)
 				with open('databases/processed_data.json', 'w') as outfile:
@@ -518,14 +528,15 @@ def experiment_page():
 				msg='Condition '+cond_name_global+' deleted.'
 				return render_template('experiment-message.html', msg=msg)
 		else:
-			conditions_df = MakeCondDF(proc_data)
+			conditions_df = (proc_data)
 			conditions_df = conditions_df[conditions_df.index.str.contains(exp_name_global)]
 			conditions_df = conditions_df.sort_index()
 			conditions_df.index = range(len(conditions_df))
+			conditions_df = conditions_df.dropna(axis=1, how='all')
 			table_html = conditions_df.to_html()
-			if metadata[exp_name_global][10] > 0:
+			if metadata[exp_name_global][12] > 0:
 				filenames = os.listdir(config['FilePath']+exp_name_global)
-				filecount = metadata[exp_name_global][10]
+				filecount = metadata[exp_name_global][12]
 			else:
 				filenames = None
 				filecount = None
@@ -542,7 +553,7 @@ def file_upload():
 		return render_template('feature-disabled.html')
 	if user_database[g.user.id][3] == 0:
 		return render_template('user-uploads-disabled.html')		
-	if metadata[exp_name_global][10] >= config['MaxFiles']:
+	if metadata[exp_name_global][12] >= config['MaxFiles']:
 		msg = 'Cannot upload more files, reached maximum for this experiment.'
 		return render_template('file-upload-message.html', msg=msg)
 	if request.method == 'GET':
@@ -558,7 +569,7 @@ def file_upload():
 		if file and allowed_file(file.filename):
 			filename = secure_filename(file.filename)
 			file.save(config['FilePath']+exp_name_global+'/'+filename)
-			metadata[exp_name_global][10]+=1
+			metadata[exp_name_global][12]+=1
 			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			msg = 'Successfully uploaded '+filename
@@ -572,7 +583,7 @@ def file_upload():
 def file_download():
 	# Manages file downloads
 	global exp_name_global
-	if metadata[exp_name_global][10] == 0:
+	if metadata[exp_name_global][12] == 0:
 		msg = 'No files to download.'
 		return render_template('download-message.html', msg=msg)
 	if request.method == 'GET':
@@ -605,7 +616,7 @@ def file_delete():
 	global exp_name_global
 	if config['EditsAllowed'] != 1:
 		return render_template('feature-disabled.html')
-	if metadata[exp_name_global][10] == 0:
+	if metadata[exp_name_global][12] == 0:
 		msg = 'No files to delete.'
 		return render_template('file-upload-message.html', msg=msg)
 	if request.method == 'GET':
@@ -623,7 +634,7 @@ def file_delete():
 				msg = 'Delete failed. Invalid identifier.'
 				return render_template('file-upload-message.html', msg=msg)
 			os.remove(config['FilePath']+exp_name_global+'/'+filenames_df['Filename'][form.data['identifier']])
-			metadata[exp_name_global][10]-=1
+			metadata[exp_name_global][12]-=1
 			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			msg = 'File deleted.'
@@ -648,11 +659,11 @@ def new_condition():
 	if request.method == 'POST':
 		form = NewConditionForm(request.form)
 		if form.validate():
-			cond_num_global = str(metadata[exp_name_global][9])
+			cond_num_global = str(metadata[exp_name_global][11])
 			cond_name_global = form.data['name']
-			proc_data[exp_name_global+cond_num_global] = [None]*32
+			proc_data[exp_name_global+cond_num_global] = [None]*33
 			proc_data[exp_name_global+cond_num_global][0]=cond_name_global
-			metadata[exp_name_global][9]+=1
+			metadata[exp_name_global][11]+=1
 			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
 			with open('databases/processed_data.json', 'w') as outfile:
@@ -677,7 +688,7 @@ def delete_experiment():
 	else:
 		form = DeleteForm(request.form)
 		if form.data['verify'] == 'DELETE':
-			for condnum in range(metadata[exp_name_global][9]):
+			for condnum in range(metadata[exp_name_global][11]):
 				proc_data.pop(exp_name_global+str(condnum))
 			metadata.pop(exp_name_global)	
 			with open('databases/metadata.json', 'w') as outfile:
@@ -780,19 +791,20 @@ def processed_data():
 	global cond_name_global
 	if request.method == 'GET':
 		data = proc_data[exp_name_global+cond_num_global]
-		form = ProcessedDataForm(pyl_hz=data[1], pyl_cycvar=data[2], pyl_niqr=data[3],
-			gas_hz=data[4], gas_cycvar=data[5], gas_niqur=data[6], pd_off=data[7],
-			pd_spikes=data[8], lp_on=data[9], lp_off=data[10], lp_spikes=data[11],
-			py_on=data[12], py_off=data[13], py_spikes=data[14], vd_on=data[15],
-			vd_off=data[16], vd_spikes=data[17], lg_off=data[18], lg_spikes=data[19],
-			dg_on=data[20], dg_off=data[21], dg_spikes=data[22], gm_on=data[23],
-			gm_off=data[24], gm_spikes=data[25], mg_on=data[26], mg_off=data[27],
-			mg_spikes=data[28], blank1=data[29], blank2=data[30], blank3=data[31])
+		form = ProcessedDataForm(pyl_hz=data[2], pyl_cycvar=data[3], pyl_niqr=data[4],
+			gas_hz=data[5], gas_cycvar=data[6], gas_niqur=data[7], pd_off=data[8],
+			pd_spikes=data[9], lp_on=data[10], lp_off=data[11], lp_spikes=data[12],
+			py_on=data[13], py_off=data[14], py_spikes=data[15], vd_on=data[16],
+			vd_off=data[17], vd_spikes=data[18], lg_off=data[19], lg_spikes=data[20],
+			dg_on=data[21], dg_off=data[22], dg_spikes=data[23], gm_on=data[24],
+			gm_off=data[25], gm_spikes=data[26], mg_on=data[27], mg_off=data[28],
+			mg_spikes=data[29], blank1=data[30], blank2=data[31], blank3=data[32])
 		return render_template('processed-data.html', form=form, name=exp_name_global, cond=cond_name_global)
 	else:
 		form = ProcessedDataForm(request.form)
 		if form.validate():
-			proc_data[exp_name_global+cond_num_global] = [cond_name_global, form.data['pyl_hz'],
+			proc_data[exp_name_global+cond_num_global] = [cond_name_global,
+				form.data['temp'], form.data['pyl_hz'],
 				form.data['pyl_cycvar'], form.data['pyl_niqr'], form.data['gas_hz'],
 				form.data['gas_cycvar'], form.data['gas_niqr'], form.data['pd_off'],
 				form.data['pd_spikes'], form.data['lp_on'], form.data['lp_off'],
@@ -813,6 +825,7 @@ def processed_data():
 @app.route('/new-user', methods=['GET', 'POST'])
 def new_user():
 	# Create new user
+	global editusername_global
 	if config['NewUsersAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	if request.method == 'GET':
@@ -837,6 +850,7 @@ def new_user():
 			with open('databases/user_pdatabase.json', 'w') as outfile:
 				json.dump(user_pdatabase, outfile)
 			user = load_user(form.data['username'])
+			editusername_global = form.data['username']
 			flask.ext.login.login_user(user)
 			return redirect(url_for('index'))
 		else:			
@@ -981,7 +995,7 @@ def sign_out():
 if __name__ == '__main__':
 	app.config["SECRET_KEY"] = "ITSASECRET"
 	port = int(os.environ.get("PORT", 5000))
-	app.run(host='0.0.0.0', port=port, debug=False)
+	app.run(host='0.0.0.0', port=port, debug=True)
 	# Do not run in debug mode if allowing external connections! Security risk.
 	
 	# Enable this line (instead of the app.run above) to use https: with an ad-hoc certificate

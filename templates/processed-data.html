@@ -7,12 +7,22 @@
 <img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
   <h3>Enter any available processed data for the experiment {{name}}</h3>
-  <h4>Condition = {{cond}}</h4>
+  <h3>Condition = {{cond}}</h3>
+      <div>{{ form.temp.label }}: {{ form.temp(class="css_class") }}</div>
+      {% for error in form.temp.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}  <p>
+  <h4>Rhythm frequency data:</h4>
     <form method="post" action="/processed-data"> 
     <div>{{ form.pyl_hz.label }}: {{ form.pyl_hz(class="css_class") }}</div>
       {% for error in form.pyl_hz.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}    
+    <div>{{ form.gas_hz.label }}: {{ form.gas_hz(class="css_class") }}</div>
+      {% for error in form.gas_hz.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <h4>Rhythm variability data:</h4>    
     <div>{{ form.pyl_cycvar.label }}: {{ form.pyl_cycvar(class="css_class") }}</div>
       {% for error in form.pyl_cycvar.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -21,10 +31,6 @@
       {% for error in form.pyl_niqr.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}       
-    <div>{{ form.gas_hz.label }}: {{ form.gas_hz(class="css_class") }}</div>
-      {% for error in form.gas_hz.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}    
     <div>{{ form.gas_cycvar.label }}: {{ form.gas_cycvar(class="css_class") }}</div>
       {% for error in form.gas_cycvar.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -32,7 +38,8 @@
     <div>{{ form.gas_niqr.label }}: {{ form.gas_niqr(class="css_class") }}</div>
       {% for error in form.gas_niqr.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}    
+      {% endfor %} 
+    <h4>PD neuron data:</h4>     
     <div>{{ form.pd_off.label }}: {{ form.pd_off(class="css_class") }}</div>
       {% for error in form.pd_off.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -40,7 +47,8 @@
     <div>{{ form.pd_spikes.label }}: {{ form.pd_spikes(class="css_class") }}</div>
       {% for error in form.pd_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}    
+      {% endfor %}  
+    <h4>LP neuron data:</h4>    
     <div>{{ form.lp_on.label }}: {{ form.lp_on(class="css_class") }}</div>
       {% for error in form.lp_on.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -52,7 +60,8 @@
     <div>{{ form.lp_spikes.label }}: {{ form.lp_spikes(class="css_class") }}</div>
       {% for error in form.lp_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}        
+      {% endfor %} 
+    <h4>PY neuron data:</h4>       
     <div>{{ form.py_on.label }}: {{ form.py_on(class="css_class") }}</div>
       {% for error in form.py_on.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -65,6 +74,7 @@
       {% for error in form.py_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}  
+    <h4>VD neuron data:</h4>
     <div>{{ form.vd_on.label }}: {{ form.vd_on(class="css_class") }}</div>
       {% for error in form.vd_on.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -76,7 +86,8 @@
     <div>{{ form.vd_spikes.label }}: {{ form.vd_spikes(class="css_class") }}</div>
       {% for error in form.vd_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}        
+      {% endfor %}  
+    <h4>LG neuron data:</h4>        
     <div>{{ form.lg_off.label }}: {{ form.lg_off(class="css_class") }}</div>
       {% for error in form.lg_off.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -84,7 +95,8 @@
     <div>{{ form.lg_spikes.label }}: {{ form.lg_spikes(class="css_class") }}</div>
       {% for error in form.lg_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}    
+      {% endfor %}   
+    <h4>DG neuron data:</h4> 
     <div>{{ form.dg_on.label }}: {{ form.dg_on(class="css_class") }}</div>
       {% for error in form.dg_on.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -96,7 +108,8 @@
     <div>{{ form.dg_spikes.label }}: {{ form.dg_spikes(class="css_class") }}</div>
       {% for error in form.dg_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}        
+      {% endfor %}  
+    <h4>GM neuron data:</h4>    
     <div>{{ form.gm_on.label }}: {{ form.gm_on(class="css_class") }}</div>
       {% for error in form.gm_on.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -108,7 +121,8 @@
     <div>{{ form.gm_spikes.label }}: {{ form.gm_spikes(class="css_class") }}</div>
       {% for error in form.gm_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}  
+      {% endfor %}
+    <h4>MG neuron data:</h4>
     <div>{{ form.mg_on.label }}: {{ form.mg_on(class="css_class") }}</div>
       {% for error in form.mg_on.errors %}
         <span style="color: red;">[{{ error }}]</span>
@@ -120,7 +134,8 @@
     <div>{{ form.mg_spikes.label }}: {{ form.mg_spikes(class="css_class") }}</div>
       {% for error in form.mg_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}        
+      {% endfor %} 
+    <h4>Blank fields:</h4>       
     <div>{{ form.blank1.label }}: {{ form.blank1(class="css_class") }}</div>
       {% for error in form.blank1.errors %}
         <span style="color: red;">[{{ error }}]</span>

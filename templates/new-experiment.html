@@ -12,30 +12,36 @@
       {% for error in form.exp_id.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}    
-    <h4>NOTE: Dates must be entered in M/D/YYYY format. Four-digit year!</h4>  
+    <h4>NOTE: Dates must be entered in M/D/YYYY format. Four-digit year!</h4>  <p>
     <div>{{ form.exp_date.label }}: {{ form.exp_date() }}</div>
       {% for error in form.exp_date.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}      
+      {% endfor %}      <p>
     <div>{{ form.animal_date.label }}: {{ form.animal_date() }}</div>
       {% for error in form.animal_date.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}          
+      {% endfor %}          <p>
     <div>{{ form.experimenter.label }}: {{ form.experimenter(class="css_class") }}</div>
       {% for error in form.experimenter.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}  
+      {% endfor %}  <p>
     <div>{{ form.lab.label }}: {{ form.lab(class="css_class") }}</div>
       {% for error in form.lab.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}         
+      {% endfor %}      <p>   
     <div>{{ form.temp.label }}: {{ form.temp(class="css_class") }}</div>
       {% for error in form.temp.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}  
-    <div>{{ form.species.label }}: {{ form.species(class="css_class") }}</div>
-    <div>{{ form.saline.label }}: {{ form.saline(class="css_class") }}</div>  
-    <div>{{ form.notes.label }}: {{ form.notes(class="css_class") }}</div>
+      {% endfor %}  <p>
+     <div>{{ form.tanktemp.label }}: {{ form.tanktemp(class="css_class") }}</div>
+      {% for error in form.tanktemp.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %} 
+      <p>        
+    <div>{{ form.species.label }}: {{ form.species(class="css_class") }}</div><p>
+    <div>{{ form.saline.label }}: {{ form.saline(class="css_class") }}</div>  <p>
+    <div>{{ form.intra_sol.label }}: {{ form.intra_sol(class="css_class") }}</div>  <p>    
+    <div>{{ form.notes.label }}: {{ form.notes(class="css_class") }}</div><p>
       {% for error in form.notes.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}                
