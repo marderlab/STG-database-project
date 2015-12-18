@@ -199,14 +199,14 @@ From here user accounts can be edited, activated and deactivated for uploads, an
 The admin may also reset the password for any user, whereupon the server generates a 
 new random password. This password must be manually supplied to the user! The server
 will not send an email to the user with this password. The Admin should email this 
-password to the user who should then log in and immediate change it.
+password to the user who should then log in and immediately change it.
 
-Note: Deleting a user does not delete all of the user's uploaded experiments. At 
-present, if you want to delete all of a user's experiments, it must be done one by one
-from the experiments page. Admin can do this. One may also write a script to remove them
-from the .json file processed_data.json, but be careful not to screw up the file! Simply
+Note: Deleting a user does not delete the user's uploaded experiments. At present, if you
+want to delete all of a user's experiments, it must be done one by one from the 
+experiments page. Admin can do this. One may also write a script to remove them from
+the .json file processed_data.json, but be careful not to screw up the file! Simply
 removing the entries with keys containing the deleted username will not upset anything
-if done properly. 
+if done properly.
 
 Remember to sign-out from the home page when finished! Currently there is no auto-sign-out
 functionality.

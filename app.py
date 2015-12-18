@@ -84,31 +84,26 @@ class LoginForm(Form):
 	
 class EditUserForm(Form):
 	email = fields.TextField('email', [
-		validators.Email(message='Not an email address.')
-		])
+		validators.Email(message='Not an email address.')])
 	surname = fields.TextField('Surname', [
 		validators.Length(max=25, message='Sorry 25 characters max'),
-		validators.InputRequired(message='Surname required')
-		])
+		validators.InputRequired(message='Surname required')])
 	lab = fields.TextField('Lab PI surname', [
 		validators.Length(max=20, message='20 characters max'),
-		validators.InputRequired(message='Lab PI surname required')
-		])
+		validators.InputRequired(message='Lab PI surname required')])
 		
 
 class UserForm(EditUserForm):
 	username = fields.TextField('Username', [
 		validators.Length(max=12, message='Maximum 12 characters'),
 		validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
-		validators.InputRequired(message='Username is required')
-		])
+		validators.InputRequired(message='Username is required')])
 
 
 class NewUserForm(UserForm):
 	password = fields.PasswordField('Password', [
 		validators.InputRequired(message='Password Field(s) Empty'),
-		validators.EqualTo('confirm', message='Passwords unmatched.')
-	])
+		validators.EqualTo('confirm', message='Passwords unmatched.')])
 	confirm = fields.PasswordField('Password')
 	
 
@@ -117,8 +112,7 @@ class PasswordChangeForm(Form):
 		validators.InputRequired(message='Please enter old password')])
 	password = fields.PasswordField('New Password', [
 		validators.InputRequired(message='Password Field(s) Empty'),
-		validators.EqualTo('confirm', message='Passwords unmatched.')
-	])
+		validators.EqualTo('confirm', message='Passwords unmatched.')])
 	confirm = fields.PasswordField('New Password (reenter)')	
 
 
@@ -153,8 +147,9 @@ class ExperimentActionForm(Form):
 		
 class FileDeleteForm(Form):
 	identifier = fields.IntegerField('File index (number in left column)')
-	confirm = fields.TextField('Type DELETE here to delete file with index entered above. Cannot be undone!', [
-		validators.Regexp('DELETE', message=('Did not type DELETE'))])
+	confirm = fields.TextField(
+		'Type DELETE here to delete file with index entered above. Cannot be undone!',
+		[validators.Regexp('DELETE', message=('Did not type DELETE'))])
 
 class FileDownloadForm(Form):
 	identifier = fields.IntegerField('File index (number in left column)')	
@@ -199,40 +194,54 @@ class ProcessedDataForm(Form):
 	gas_cycvar = fields.DecimalField('Gastric cyc-to-cyc var (%)', [validators.Optional()])
 	gas_niqr = fields.DecimalField('Gastric frequency NIQR', [validators.Optional()])
 	pd_off = fields.DecimalField('PD off phase (duty cycle, 0-1)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])
 	pd_spikes = fields.DecimalField('PD spikes/burst', [validators.Optional()])
 	lp_on = fields.DecimalField('LP on phase (0-1, from PD start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])	
 	lp_off = fields.DecimalField('LP off phase (0-1, from PD start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])
 	lp_spikes = fields.DecimalField('LP spikes/burst', [validators.Optional()])
 	py_on = fields.DecimalField('PY on phase (0-1, from PD start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])	
 	py_off = fields.DecimalField('PY off phase (0-1, from PD start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])
 	py_spikes = fields.DecimalField('PY spikes/burst', [validators.Optional()])	
 	vd_on = fields.DecimalField('VD on phase (0-1, from PD start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])	
 	vd_off = fields.DecimalField('VD off phase (0-1, from PD start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])
 	vd_spikes = fields.DecimalField('VD spikes/burst', [validators.Optional()])
 	lg_off = fields.DecimalField('Gastric LG off phase (duty cycle, 0-1', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])
 	lg_spikes = fields.DecimalField('Gastric LG spikes/burst', [validators.Optional()])	
 	dg_on = fields.DecimalField('Gastric DG on phase (0-1, from LG start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])	
 	dg_off = fields.DecimalField('Gastric DG off phase (0-1, from LG start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])
 	dg_spikes = fields.DecimalField('Gastric DG spikes/burst', [validators.Optional()])
 	gm_on = fields.DecimalField('Gastric GM on phase (0-1, from LG start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])	
 	gm_off = fields.DecimalField('Gastric GM off phase (0-1, from LG start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])
 	gm_spikes = fields.DecimalField('Gastric GM spikes/burst', [validators.Optional()])
 	mg_on = fields.DecimalField('Gastric MG on phase (0-1, from LG start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])	
 	mg_off = fields.DecimalField('Gastric MG off phase (0-1, from LG start)', [
-		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
+		validators.Optional()])
 	mg_spikes = fields.DecimalField('Gastric MG spikes/burst', [validators.Optional()])
 	blank1 = fields.DecimalField('Blank Field 1 (describe in notes)', [validators.Optional()])
 	blank2 = fields.DecimalField('Blank Field 2 (describe in notes)', [validators.Optional()])
@@ -329,7 +338,8 @@ def dl_files_page():
 	if request.method == 'POST':
 		form = FileDownloadForm(request.form)
 		if form.data['identifier']>=0 and form.data['identifier']<len(metadata_df):
-			exp_name_global = metadata_df.loc[form.data['identifier']]['User']+'-'+metadata_df.loc[form.data['identifier']]['Exp ID']
+			exp_name_global = metadata_df.loc[form.data['identifier']]['User'] \
+				+'-'+metadata_df.loc[form.data['identifier']]['Exp ID']
 			return redirect(url_for('file_download'))
 	form = FileDownloadForm()
 	table_html = metadata_df.to_html()
@@ -427,9 +437,11 @@ def upload_page():
 			metadata_df=metadata_df.loc[metadata_df.loc[:,'User']==g.user.id,:]	
 		metadata_df.index = range(len(metadata_df)) 	
 		if form.validate():		# Checks for valid form entry
-			if form.data['identifier']<0 or form.data['identifier']>(len(metadata_df)-1) or form.data['identifier']==None:
+			if form.data['identifier']<0 or form.data['identifier']>(len(metadata_df)-1) \
+										or form.data['identifier']==None:
 				return render_template('upload-message.html', msg='Invalid identifier')
-			exp_name_global = metadata_df.loc[form.data['identifier'], 'User']+'-'+metadata_df.loc[form.data['identifier'], 'Exp ID']	
+			exp_name_global = metadata_df.loc[form.data['identifier'], 'User'] \
+				+'-'+metadata_df.loc[form.data['identifier'], 'Exp ID']	
 			if form.data['action'] == 'editP':
 				return redirect(url_for('experiment_page'))
 			if form.data['action'] == 'editM':
@@ -478,7 +490,8 @@ def experiment_page():
 		else:
 			filenames = None
 			filecount = None
-		return render_template('experiment-page.html', table_html=table_html, filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
+		return render_template('experiment-page.html', table_html=table_html,
+			filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
 	if request.method == 'POST':
 		form = ExperimentActionForm(request.form)
 		if form.validate():
@@ -516,7 +529,8 @@ def experiment_page():
 			else:
 				filenames = None
 				filecount = None
-			return render_template('experiment-page.html', table_html=table_html, filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
+			return render_template('experiment-page.html', table_html=table_html,
+				filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
 		
 
 @app.route('/file-upload', methods=['GET', 'POST'])
@@ -575,7 +589,8 @@ def file_download():
 			if form.data['identifier'] >= len(filenames_df['Filename']) or form.data['identifier'] < 0:
 				msg = 'Download failed. Invalid identifier.'
 				return render_template('download-message.html', msg=msg)
-			return send_from_directory(config['FilePath']+exp_name_global+'/', filenames_df['Filename'][form.data['identifier']], as_attachment=True)
+			return send_from_directory(config['FilePath']+exp_name_global+'/',
+				filenames_df['Filename'][form.data['identifier']], as_attachment=True)
 		else:
 			filenames = os.listdir(config['FilePath']+exp_name_global)
 			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
@@ -691,7 +706,8 @@ def new_experiment():
 		return render_template('user-uploads-disabled.html')		
 	user_experiment_count = sum([g.user.id in key for key in metadata.keys()])
 	if user_experiment_count >= config['MaxUserExperiments']:
-		return render_template('upload-message.html', msg='You cannot create any more experiments (reached user maximum)')
+		return render_template('upload-message.html',
+			msg='You cannot create any more experiments (reached user maximum)')
 	if request.method == 'GET':
 		form = NewMetadataForm()
 		return render_template('new-experiment.html', name=g.user.id, form=form)
@@ -732,7 +748,8 @@ def edit_metadata():
 		data = metadata[exp_name_global]
 		form = MetadataForm(experimenter=data[4], notes=data[11],
 			lab=data[5], temp=data[6], species=data[7], saline=data[8])
-		return render_template('edit-metadata.html', form=form, name=exp_name_global, oldexpdate=data[2], oldandate=data[3])
+		return render_template('edit-metadata.html', form=form, name=exp_name_global,
+			oldexpdate=data[2], oldandate=data[3])
 	else:
 		form = MetadataForm(request.form)
 		if form.validate():
@@ -863,9 +880,11 @@ def password_change():
 		form = PasswordChangeForm(request.form)
 		if hashlib.sha256(form.data['oldpassword']).hexdigest() \
 				!= user_pdatabase[editusername_global]:
-			return render_template('password-change.html', form=form, msg='Wrong password for '+editusername_global)
+			return render_template('password-change.html', form=form,
+				msg='Wrong password for '+editusername_global)
 		if not form.validate():
-			return render_template('password-change.html', form=form, msg=editusername_global+' password change')						
+			return render_template('password-change.html', form=form,
+				msg=editusername_global+' password change')						
 		else:
 			user_pdatabase[editusername_global] = \
 				(hashlib.sha256(form.data['password']).hexdigest())
@@ -919,7 +938,8 @@ def admin_page():
 				lab=user_database[editusername_global][2])
 			return render_template('edit-user.html', form=form, name=editusername_global)
 		if form.data['action'] == 'password':
-			new_random_password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
+			new_random_password = ''.join(
+				random.choice(string.ascii_letters + string.digits) for _ in range(8))
 			user_pdatabase[form.data['username']] = \
 				(hashlib.sha256(new_random_password).hexdigest())
 			with open('databases/user_pdatabase.json', 'w') as outfile:
@@ -931,12 +951,14 @@ def admin_page():
 			user_database[form.data['username']][3] = 1
 			with open('databases/user_database.json', 'w') as outfile:
 				json.dump(user_database, outfile)
-			return render_template('admin-message.html', msg=form.data['username']+' can now upload data.')			
+			return render_template('admin-message.html',
+				msg=form.data['username']+' can now upload data.')			
 		if form.data['action'] == 'deactivate':
 			user_database[form.data['username']][3] = 0
 			with open('databases/user_database.json', 'w') as outfile:
 				json.dump(user_database, outfile)
-			return render_template('admin-message.html', msg=form.data['username']+' can no longer upload data.')
+			return render_template('admin-message.html',
+				msg=form.data['username']+' can no longer upload data.')
 
 
 @app.route('/')
@@ -959,7 +981,7 @@ def sign_out():
 if __name__ == '__main__':
 	app.config["SECRET_KEY"] = "ITSASECRET"
 	port = int(os.environ.get("PORT", 5000))
-	app.run(host='0.0.0.0', port=port, debug=True)
+	app.run(host='0.0.0.0', port=port, debug=False)
 	# Do not run in debug mode if allowing external connections! Security risk.
 	
 	# Enable this line (instead of the app.run above) to use https: with an ad-hoc certificate
