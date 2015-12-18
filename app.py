@@ -69,6 +69,7 @@ with open('databases/metadata.json') as json_data:
 with open('databases/processed_data.json') as json_data:
 	proc_data = json.load(json_data)
 	json_data.close()
+
 	
 # Basic user class, required for Flask-Login which handles user sessions
 class User(UserMixin):
@@ -198,28 +199,44 @@ class ProcessedDataForm(Form):
 	gas_cycvar = fields.DecimalField('Gastric cyc-to-cyc var (%)', [validators.Optional()])
 	gas_niqr = fields.DecimalField('Gastric frequency NIQR', [validators.Optional()])
 	pd_off = fields.DecimalField('PD off phase (duty cycle, 0-1)', [
-		validators.NumberRange(min=0, max=1, message='0-1 please, not radians!'), validators.Optional()])
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
 	pd_spikes = fields.DecimalField('PD spikes/burst', [validators.Optional()])
-	lp_on = fields.DecimalField('LP on phase (0-1, from PD start)', [validators.Optional()])	
-	lp_off = fields.DecimalField('LP off phase (0-1, from PD start)', [validators.Optional()])
+	lp_on = fields.DecimalField('LP on phase (0-1, from PD start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+	lp_off = fields.DecimalField('LP off phase (0-1, from PD start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
 	lp_spikes = fields.DecimalField('LP spikes/burst', [validators.Optional()])
-	py_on = fields.DecimalField('PY on phase (0-1, from PD start)', [validators.Optional()])	
-	py_off = fields.DecimalField('PY off phase (0-1, from PD start)', [validators.Optional()])
+	py_on = fields.DecimalField('PY on phase (0-1, from PD start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+	py_off = fields.DecimalField('PY off phase (0-1, from PD start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
 	py_spikes = fields.DecimalField('PY spikes/burst', [validators.Optional()])	
-	vd_on = fields.DecimalField('VD on phase (0-1, from PD start)', [validators.Optional()])	
-	vd_off = fields.DecimalField('VD off phase (0-1, from PD start)', [validators.Optional()])
+	vd_on = fields.DecimalField('VD on phase (0-1, from PD start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+	vd_off = fields.DecimalField('VD off phase (0-1, from PD start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
 	vd_spikes = fields.DecimalField('VD spikes/burst', [validators.Optional()])
-	lg_off = fields.DecimalField('Gastric LG off phase (duty cycle, 0-1', [validators.Optional()])
+	lg_off = fields.DecimalField('Gastric LG off phase (duty cycle, 0-1', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
 	lg_spikes = fields.DecimalField('Gastric LG spikes/burst', [validators.Optional()])	
-	dg_on = fields.DecimalField('Gastric DG on phase (0-1, from LG start)', [validators.Optional()])	
-	dg_off = fields.DecimalField('Gastric DG off phase (0-1, from LG start)', [validators.Optional()])
+	dg_on = fields.DecimalField('Gastric DG on phase (0-1, from LG start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+	dg_off = fields.DecimalField('Gastric DG off phase (0-1, from LG start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
 	dg_spikes = fields.DecimalField('Gastric DG spikes/burst', [validators.Optional()])
-	gm_on = fields.DecimalField('Gastric GM on phase (0-1, from LG start)', [validators.Optional()])	
-	gm_off = fields.DecimalField('Gastric GM off phase (0-1, from LG start)', [validators.Optional()])
+	gm_on = fields.DecimalField('Gastric GM on phase (0-1, from LG start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+	gm_off = fields.DecimalField('Gastric GM off phase (0-1, from LG start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
 	gm_spikes = fields.DecimalField('Gastric GM spikes/burst', [validators.Optional()])
-	mg_on = fields.DecimalField('Gastric MG on phase (0-1, from LG start)', [validators.Optional()])	
-	mg_off = fields.DecimalField('Gastric MG off phase (0-1, from LG start)', [validators.Optional()])
-	mg_spikes = fields.DecimalField('Gastric MG spikes/burst', [validators.Optional()])	
+	mg_on = fields.DecimalField('Gastric MG on phase (0-1, from LG start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])	
+	mg_off = fields.DecimalField('Gastric MG off phase (0-1, from LG start)', [
+		validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'), validators.Optional()])
+	mg_spikes = fields.DecimalField('Gastric MG spikes/burst', [validators.Optional()])
+	blank1 = fields.DecimalField('Blank Field 1 (describe in notes)', [validators.Optional()])
+	blank2 = fields.DecimalField('Blank Field 2 (describe in notes)', [validators.Optional()])
+	blank3 = fields.DecimalField('Blank Field 3 (describe in notes)', [validators.Optional()])
 	
 
 # Functions for making dataframes from databases to serve in html templates			
@@ -230,24 +247,19 @@ def MakeDF(data, column_names):
 
 
 def MakeMetaDF(data):
-	column_names = ['User', 'Exp ID', 'Exp Date',
-			'Animal Date', 'Experimenter', 'Lab', 'Temp (C)', 'Species',
-			'Saline', 'Conditions', 'Files', 'Notes']
+	column_names = ['User', 'Exp ID', 'Exp Date','Animal Date', 'Experimenter', 'Lab',
+		'Temp (C)', 'Species', 'Saline', 'Conditions', 'Files', 'Notes']
 	df = pd.DataFrame(data.values(), columns = column_names, index=data.keys())
 	df = df.sort_values(by='Exp Date')
 	return df
 	
 
 def MakeCondDF(data):
-	column_names = ['cond_name','pyl_hz',
-				'pyl_cycvar','pyl_niqr','gas_hz',
-				'gas_cycvar','gas_niqr','pd_off',
-				'pd_spikes','lp_on','lp_off',
-				'lp_spikes','py_on','py_off',
-				'py_spikes','vd_on','vd_off',
-				'vd_spikes','lg_off','lg_spikes',
-				'dg_on','dg_off','dg_spikes','gm_on','gm_off','gm_spikes',
-				'mg_on','mg_off','mg_spikes']
+	column_names = ['cond_name','pyl_hz','pyl_cycvar','pyl_niqr','gas_hz','gas_cycvar',
+		'gas_niqr','pd_off','pd_spikes','lp_on','lp_off','lp_spikes','py_on','py_off',
+		'py_spikes','vd_on','vd_off','vd_spikes','lg_off','lg_spikes','dg_on','dg_off',
+		'dg_spikes','gm_on','gm_off','gm_spikes','mg_on','mg_off','mg_spikes', 'blank1',
+		'blank2', 'blank3']
 	df = pd.DataFrame(proc_data.values(), columns=column_names, index=proc_data.keys())
 	df = df.sort_index()
 	return df
@@ -623,7 +635,7 @@ def new_condition():
 		if form.validate():
 			cond_num_global = str(metadata[exp_name_global][9])
 			cond_name_global = form.data['name']
-			proc_data[exp_name_global+cond_num_global] = [None]*29
+			proc_data[exp_name_global+cond_num_global] = [None]*32
 			proc_data[exp_name_global+cond_num_global][0]=cond_name_global
 			metadata[exp_name_global][9]+=1
 			with open('databases/metadata.json', 'w') as outfile:
@@ -694,7 +706,7 @@ def new_experiment():
 				str(form.data['animal_date']), form.data['experimenter'],
 				form.data['lab'], form.data['temp'], form.data['species'],
 				form.data['saline'], 1, 0, form.data['notes']]
-			proc_data[g.user.id+'-'+form.data['exp_id']+'0'] = [None]*29
+			proc_data[g.user.id+'-'+form.data['exp_id']+'0'] = [None]*32
 			proc_data[g.user.id+'-'+form.data['exp_id']+'0'][0]='baseline'
 			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
@@ -758,7 +770,7 @@ def processed_data():
 			vd_off=data[16], vd_spikes=data[17], lg_off=data[18], lg_spikes=data[19],
 			dg_on=data[20], dg_off=data[21], dg_spikes=data[22], gm_on=data[23],
 			gm_off=data[24], gm_spikes=data[25], mg_on=data[26], mg_off=data[27],
-			mg_spikes=data[28])
+			mg_spikes=data[28], blank1=data[29], blank2=data[30], blank3=data[31])
 		return render_template('processed-data.html', form=form, name=exp_name_global, cond=cond_name_global)
 	else:
 		form = ProcessedDataForm(request.form)
@@ -772,7 +784,8 @@ def processed_data():
 				form.data['vd_spikes'], form.data['lg_off'], form.data['lg_spikes'],
 				form.data['dg_on'], form.data['dg_off'], form.data['dg_spikes'],
 				form.data['gm_on'], form.data['gm_off'], form.data['gm_spikes'],
-				form.data['mg_on'], form.data['mg_off'], form.data['mg_spikes']]
+				form.data['mg_on'], form.data['mg_off'], form.data['mg_spikes'],
+				form.data['blank1'], form.data['blank2'], form.data['blank3']]
 			with open('databases/processed_data.json', 'w') as outfile:
 				json.dump(proc_data, outfile)
 			return redirect(url_for('experiment_page'))
@@ -946,7 +959,7 @@ def sign_out():
 if __name__ == '__main__':
 	app.config["SECRET_KEY"] = "ITSASECRET"
 	port = int(os.environ.get("PORT", 5000))
-	app.run(host='0.0.0.0', port=port, debug=False)
+	app.run(host='0.0.0.0', port=port, debug=True)
 	# Do not run in debug mode if allowing external connections! Security risk.
 	
 	# Enable this line (instead of the app.run above) to use https: with an ad-hoc certificate

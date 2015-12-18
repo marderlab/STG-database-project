@@ -12,20 +12,20 @@ OUTLINE
 =======
 
 This project includes the files for running a database server to manage data from 
-preparations of the stomatogastric ganglion (STG). It manages user account for uploading
-of data (anyone can download). In includes privileges for an administrator account
+preparations of the stomatogastric ganglion (STG). It manages user accounts for uploading
+of data (anyone can download). It includes privileges for an administrator account
 that can activate users for uploads, delete users, and manage all experiments. Users
 can enter experiments, which are defined first by metadata. Then they enter processed
 data (such as frequency and phase relationships) for a baseline condition. Following 
-this users may add more conditions and associated processed data. Users may also upload 
+this users can add more conditions and associated processed data. Users can also upload 
 files to associate with these experiments.
 
 
 REQUIREMENTS
 ============
 
-This code is written using Python 2.7, and depends on several python modules. Those most
-likely to need installation include pandas, Flask, Flask-Login, and WTForms. 
+This code is written for Python 2.7, and depends on several python modules. Those most
+likely to need installation include pandas, Flask, Flask-Login, and WTForms.   
 
 
 GETTING THE SERVER RUNNING
@@ -63,7 +63,7 @@ your account will need to be activated for uploads by the administrator before y
 allowed to upload files or enter new experiments. Email the administrator to ask for this
 activation; a link to send the administrator an email is on the homepage.
 
-Once you have followed this procedure and have an activated account, you may log in and 
+Once you have followed this procedure and have an activated account, you can log in and 
 enter experiments. Basic details about accounts such as user info and password can be
 edited by following links from the home page once signed in.
 
@@ -79,13 +79,17 @@ shows the metadata for all the experiments you have entered so far. Under "Other
 click "Enter a new experiment". 
 
 You will then be prompted to enter metadata for the experiment including a name (such as 
-lab notebook page), experiment date, species and saline information, lab, as well as a free-
-form space for entering notes about your experiment. The only required field here is 
+lab notebook page), experiment date, species and saline information, lab, as well as a
+free-form space for entering notes about your experiment. The only required field here is 
 experiment date, but please enter all data that are available.
 
-The next step is to enter processed data for a "baseline" condition. PLEASE MAKE SURE 
-BASELINE DATA ARE FROM A FRONT-END ON, UNMANIPULATED PREP! Other conditions should be 
-entered as new conditions. There are no required fields for processed data.
+The next step is to enter processed data for a "baseline" condition. **PLEASE MAKE SURE 
+BASELINE DATA ARE FROM A FRONT-END ON, UNMANIPULATED PREP!** Other conditions should be 
+entered as new conditions. 
+
+There are no required fields for processed data; there are more fields for processed data
+than you will need for any particular experiment. Three blank decimal fields are also 
+provided. If these are used they should be described in notes on the metadata page. 
 
 After submitting you will be taken to the experiment page.
 
@@ -155,12 +159,18 @@ and downloaded by entering the file index and clicking the download button.
 ADMINISTRATOR FUNCTIONS
 =======================
 
+Someone will hopefully always be in charge of administrating the project. At a minimum,
+admin duties involve activating new users for uploads, keeping the server up to date,
+and regularly backing up the data. If you should find the STG database running without
+any responsible attendant party, please disconnect it, before it gains consciousness.
+
+
 config.json
 -----------
 
 This file can be edited with a text editor (nothing fancy! TextEdit on Mac, for example,
-tends to change the " marks to something python will no longer understand). The parameters
-are:
+tends to change the " marks to something python will no longer understand). Don't 
+disturb the .json formatting. The parameters are:
 
 - "FilePath" : This specifies the path where uploaded files are stored. Must exist!
 - "AllowedFiletypes" : The extensions that are allowable for user file uploads

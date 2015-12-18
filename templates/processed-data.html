@@ -120,7 +120,19 @@
     <div>{{ form.mg_spikes.label }}: {{ form.mg_spikes(class="css_class") }}</div>
       {% for error in form.mg_spikes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}                                      
+      {% endfor %}        
+    <div>{{ form.blank1.label }}: {{ form.blank1(class="css_class") }}</div>
+      {% for error in form.blank1.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.blank2.label }}: {{ form.blank2(class="css_class") }}</div>
+      {% for error in form.blank2.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}    
+    <div>{{ form.blank3.label }}: {{ form.blank3(class="css_class") }}</div>
+      {% for error in form.blank3.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}                                         
     <p><input type=submit value=Submit>
   </form>
   <p>Nevermind, back to <a href="{{ url_for('upload_page') }}">experiments page</a></p>    
