@@ -36,12 +36,11 @@ modules are in place in python. It depends on finding the following:
 
 - A config.json file in the main directory, described below
 - Directory specified for file uploads in config.json must exit (/files by default)
-- A /databases subdirectory must exist and include:
-	-user_database.json, containing user information
-	-user_pdatabase.json, containing hashed user password information for logins
-	-processed_data.json, containing processed data for all conditions
-	-metadata.json, containing metadata for all entered experiments
-	Base forms of these files are included in this distribution in /Database-seeds
+- A /databases subdirectory must exist and include: user_database.json, containing user
+information; user_pdatabase.json, containing hashed user password information for logins;
+processed_data.json, containing processed data for all conditions; and metadata.json, 
+containing metadata for all entered experiments. Base forms of these files are included
+in this distribution in /Database-seeds
 - A /static subdirectory including the image file crabs.jpg
 - A /templates subdirectory containing all the .html templates used to serve webpages
 
@@ -86,7 +85,7 @@ experiment date, but please enter all data that are available.
 
 The next step is to enter processed data for a "baseline" condition. PLEASE MAKE SURE 
 BASELINE DATA ARE FROM A FRONT-END ON, UNMANIPULATED PREP! Other conditions should be 
-entered as new conditions.
+entered as new conditions. There are no required fields for processed data.
 
 After submitting you will be taken to the experiment page.
 
@@ -115,17 +114,17 @@ by editing the config.json file.
 Editing and deleting conditions
 -------------------------------
 
-You may edit or delete previously entered condition processed data by selecting a
-condition entering its index (leftmost column of the html table), choosing your option
-from the dropdown "Action" button, and clicking "Act on condition".
+You can edit or delete previously entered condition processed data by entering a
+condition: enter its index (leftmost column of the html table), choose your option
+from the dropdown "Action" button, and click "Act on condition".
 
 
 Editing and deleting experiments and metadata
 ---------------------------------------------
 
-From the "my experiments" or just "experiments" page, you may select a previously 
-entered experiment by its index and select an option from the "Action" dropdown, and then
-click "Act on experiment". The "Edit / Upload Data (conditions and files)" option will
+To delete or edit a previously entered experiment, select the experiment by entering its
+index (on the experiments page), choose the appropriate option from the "Action" dropdown,
+and click "Act on experiment". The "Edit / Upload Data (conditions and files)" option will
 take you to the Experiment page as described above.
 
 
@@ -140,7 +139,7 @@ home page.
 Metadata and processed data for all conditions
 ----------------------------------------------
 
-These may be viewed or downloaded as .json or .csv files. For metadata, there is also an
+These can be viewed or downloaded as .json or .csv files. For metadata, there is also an
 option to download without the "Notes" field. This field allows large text inputs and 
 may make .csv files unwieldy. 
 
@@ -149,20 +148,19 @@ Uploaded files
 --------------
 
 Following this link first prompts the user to select an experiment by metadata. It then
-displays a list of uploaded files associated with this experiment which may be selected
+displays a list of uploaded files associated with this experiment, which may be selected
 and downloaded by entering the file index and clicking the download button.
 
 
 ADMINISTRATOR FUNCTIONS
 =======================
 
-
 config.json
 -----------
 
-This file may be edited with a text editor (nothing fancy! TextEdit on Mac, for example,
-tends to change the " marks to something python will no longer understand. Make sure 
-you are just leaving it Unicode). The parameters are:
+This file can be edited with a text editor (nothing fancy! TextEdit on Mac, for example,
+tends to change the " marks to something python will no longer understand). The parameters
+are:
 
 - "FilePath" : This specifies the path where uploaded files are stored. Must exist!
 - "AllowedFiletypes" : The extensions that are allowable for user file uploads
@@ -187,13 +185,13 @@ the Admin page (from a link on the home page).
 Admin page
 ----------
 
-From here user accounts can be edited, activated and deactivated for uploads, or deleted.
+From here user accounts can be edited, activated and deactivated for uploads, and deleted.
 The admin may also reset the password for any user, whereupon the server generates a 
 new random password. This password must be manually supplied to the user! The server
 will not send an email to the user with this password. The Admin should email this 
-password to the user who should then log in and immediate change this password.
+password to the user who should then log in and immediate change it.
 
-Note: Deleting a user here does not delete all of the user's uploaded experiments. At 
+Note: Deleting a user does not delete all of the user's uploaded experiments. At 
 present, if you want to delete all of a user's experiments, it must be done one by one
 from the experiments page. Admin can do this. One may also write a script to remove them
 from the .json file processed_data.json, but be careful not to screw up the file! Simply
@@ -207,5 +205,5 @@ functionality.
 password_tool.py
 ----------------
 
-This is a simple script that resets the Admin password, if it is ever forgotten. Simply
-run it from the terminal in the main project directory by python password_tool.py
+This is a simple script that resets the Admin password, if it is ever forgotten. Run it
+from the terminal in the main project directory by $ python password_tool.py
