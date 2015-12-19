@@ -46,7 +46,7 @@
     <p>
     <div>{{ form.intra_sol.label }}: {{ form.intra_sol(class="css_class") }}</div>  <p>    
 
-    <div>{{ form.notes.label }}: {{ form.notes(class="css_class") }}</div>
+    <div>{{ form.notes.label }}: {{ form.notes(cols="40", rows="5") }}</div>
       {% for error in form.notes.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}                

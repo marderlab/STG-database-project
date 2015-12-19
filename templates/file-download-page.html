@@ -9,13 +9,9 @@
   <h3>Here are the files for this experiment:</h3>
   {{table_html | safe}}
   <p><p>
-  <h3>Choose a file and click the button to download:</h3>
+  <h3>Click the button to download as a zip file:</h3>
   <form method="post" action="/file-download"> 
-    <div>{{ form.identifier.label }}: {{ form.identifier(class="css_class") }}</div>
-      {% for error in form.identifier.errors %}
-        <span style="color: red;">[Invalid identifier]</span>
-      {% endfor %}
-    <p><input type=submit value="Download File">
+    <p><input type=submit value="Download Files">
   </form>
   <body>         
     <p>Nevermind, back to <a href="{{ url_for('download_page') }}">data page</a></p>

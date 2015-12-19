@@ -23,6 +23,7 @@ from werkzeug import secure_filename
 from shutil import rmtree
 import os
 import sys
+import zipfile
 import random
 import string
 import logging
@@ -149,10 +150,7 @@ class FileDeleteForm(Form):
 	identifier = fields.IntegerField('File index (number in left column)')
 	confirm = fields.TextField(
 		'Type DELETE here to delete file with index entered above. Cannot be undone!',
-		[validators.Regexp('DELETE', message=('Did not type DELETE'))])
-
-class FileDownloadForm(Form):
-	identifier = fields.IntegerField('File index (number in left column)')	
+		[validators.Regexp('DELETE', message=('Did not type DELETE'))])	
 		
 
 class NewConditionForm(Form):
@@ -161,6 +159,14 @@ class NewConditionForm(Form):
 		validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
 		validators.InputRequired(message='Must enter a condition name')])
 
+
+class FileDownloadForm(Form):
+	identifier = fields.IntegerField('Experiment index (number in left column)')
+	
+
+class ReadMeForm(Form):
+	read_me = fields.TextAreaField('Please add to the read_me file to describe uploaded files')
+	
 		
 class MetadataForm(Form):
 	exp_date = fields.DateField('Experiment Date',  [
@@ -287,6 +293,12 @@ def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.', 1)[1] in allowed_exts
 
 
+def zipdir(path, zipf):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            zipf.write(os.path.join(root, file))
+            
+
 @login_manager.user_loader
 def load_user(user_id):
 	# Populates user instance for Flask.Login user handling on login
@@ -348,8 +360,8 @@ def dl_files_page():
 			exp_name_global = metadata_df.loc[form.data['identifier']]['User'] \
 				+'-'+metadata_df.loc[form.data['identifier']]['Exp ID']
 			return redirect(url_for('file_download'))
-	form = FileDownloadForm()
 	table_html = metadata_df.to_html()
+	form = FileDownloadForm()
 	return render_template('dl-files-page.html', table_html=table_html, form=form)
 
 
@@ -474,8 +486,7 @@ def experiment_page():
 	
 	This includes uploading associated files, editing metadata, or adding/editing/deleting
 	conditions
-	"""
-	
+	"""	
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
 	if user_database[g.user.id][3] == 0:
@@ -483,6 +494,15 @@ def experiment_page():
 	global exp_name_global
 	global cond_num_global
 	global cond_name_global
+	if not os.path.isdir(config['FilePath']+exp_name_global):
+		os.mkdir(config['FilePath']+exp_name_global)	
+	if not os.path.exists(config['FilePath']+exp_name_global+'/READ_ME.txt'):
+		read_me = open(config['FilePath']+exp_name_global+'/READ_ME.txt', 'w')
+		read_me.write('Auto-generated blank read_me for '+exp_name_global)
+		read_me.close()
+		metadata[exp_name_global][12] += 1
+		with open('databases/metadata.json', 'w') as outfile:
+			json.dump(metadata, outfile)		
 	if request.method == 'GET':
 		conditions_df = MakeCondDF(proc_data)
 		conditions_df = conditions_df[conditions_df.index.str.contains(exp_name_global)]
@@ -490,16 +510,9 @@ def experiment_page():
 		conditions_df.index = range(len(conditions_df))
 		conditions_df = conditions_df.dropna(axis=1, how='all')
 		table_html = conditions_df.to_html()
-		form = ExperimentActionForm()
-		if not os.path.isdir(config['FilePath']+exp_name_global):
-			os.mkdir(config['FilePath']+exp_name_global)
-		print(exp_name_global)
-		if metadata[exp_name_global][12] > 0:
-			filenames = os.listdir(config['FilePath']+exp_name_global)
-			filecount = metadata[exp_name_global][12]
-		else:
-			filenames = None
-			filecount = None
+		form = ExperimentActionForm()		
+		filenames = os.listdir(config['FilePath']+exp_name_global)
+		filecount = metadata[exp_name_global][12]
 		return render_template('experiment-page.html', table_html=table_html,
 			filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
 	if request.method == 'POST':
@@ -534,12 +547,8 @@ def experiment_page():
 			conditions_df.index = range(len(conditions_df))
 			conditions_df = conditions_df.dropna(axis=1, how='all')
 			table_html = conditions_df.to_html()
-			if metadata[exp_name_global][12] > 0:
-				filenames = os.listdir(config['FilePath']+exp_name_global)
-				filecount = metadata[exp_name_global][12]
-			else:
-				filenames = None
-				filecount = None
+			filenames = os.listdir(config['FilePath']+exp_name_global)
+			filecount = metadata[exp_name_global][12]
 			return render_template('experiment-page.html', table_html=table_html,
 				filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
 		
@@ -557,17 +566,27 @@ def file_upload():
 		msg = 'Cannot upload more files, reached maximum for this experiment.'
 		return render_template('file-upload-message.html', msg=msg)
 	if request.method == 'GET':
-		return render_template('file-upload-page.html', name=exp_name_global)
+		read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt')
+		form = ReadMeForm(read_me = read_me_file.read(10000))
+		read_me_file.close()
+		return render_template('file-upload-page.html', name=exp_name_global, form=form)
 	else:
+		form = ReadMeForm(request.form)
+		read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt', 'w')
+		read_me_file.write(form.data['read_me'])
+		read_me_file.close()
 		file = request.files['file']
 		file.seek(0, os.SEEK_END)
 		file_length = file.tell()
-		print(file_length)
 		if file_length > config['MaxFilesizeMB']*1e6:
 			msg = 'Cannot upload, file too large'
 			return render_template('file-upload-message.html', msg=msg)
+		file.seek(0, os.SEEK_SET)
 		if file and allowed_file(file.filename):
 			filename = secure_filename(file.filename)
+			filenames = os.listdir(config['FilePath']+exp_name_global)
+			if filename in filenames:
+				return render_template('file-upload-message.html', msg='Filename already used.')
 			file.save(config['FilePath']+exp_name_global+'/'+filename)
 			metadata[exp_name_global][12]+=1
 			with open('databases/metadata.json', 'w') as outfile:
@@ -578,6 +597,25 @@ def file_upload():
 			msg = 'Upload failed. File type is probably not allowed.'
 			return render_template('file-upload-message.html', msg=msg)	
 
+
+@app.route('/files-readme', methods=['GET', 'POST'])
+@login_required
+def files_readme():
+	# Direct edit of read me file for files
+	global exp_name_global
+	if request.method == 'GET':
+		read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt')
+		form = ReadMeForm(read_me = read_me_file.read(10000))
+		read_me_file.close()
+		filenames = os.listdir(config['FilePath']+exp_name_global)	
+		return render_template('files-readme-page.html', form=form, filenames=filenames)
+	else:
+		form = ReadMeForm(request.form)
+		read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt', 'w')
+		read_me_file.write(form.data['read_me'])
+		read_me_file.close()
+		return redirect(url_for('experiment_page'))
+		
 
 @app.route('/file-download', methods=['GET', 'POST'])
 def file_download():
@@ -590,23 +628,17 @@ def file_download():
 		filenames = os.listdir(config['FilePath']+exp_name_global)
 		filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 		table_html = filenames_df.to_html()
-		form = FileDownloadForm()
-		return render_template('file-download-page.html', table_html=table_html, form=form)
+		return render_template('file-download-page.html', table_html=table_html)
 	else:
-		form = FileDownloadForm(request.form)
-		if form.validate():
-			filenames = os.listdir(config['FilePath']+exp_name_global)
-			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
-			if form.data['identifier'] >= len(filenames_df['Filename']) or form.data['identifier'] < 0:
-				msg = 'Download failed. Invalid identifier.'
-				return render_template('download-message.html', msg=msg)
-			return send_from_directory(config['FilePath']+exp_name_global+'/',
-				filenames_df['Filename'][form.data['identifier']], as_attachment=True)
-		else:
-			filenames = os.listdir(config['FilePath']+exp_name_global)
-			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
-			table_html = filenames_df.to_html()		
-			return render_template('file-delete-page.html', table_html=table_html, form=form)			
+		if os.path.exists('temp/'):
+			rmtree('temp/')
+		os.mkdir('temp')
+		zipf = zipfile.ZipFile('temp/'+exp_name_global+'.zip', 'w')
+		os.chdir(config['FilePath'])		
+		zipdir(exp_name_global, zipf)
+		zipf.close()
+		os.chdir('..')
+		return send_from_directory('temp/',	exp_name_global+'.zip', as_attachment=True)		
 
 
 @app.route('/file-delete', methods=['GET', 'POST'])
@@ -731,9 +763,10 @@ def new_experiment():
 			metadata[g.user.id+'-'+form.data['exp_id']] = [
 				g.user.id, form.data['exp_id'], str(form.data['exp_date']),
 				str(form.data['animal_date']), form.data['experimenter'],
-				form.data['lab'], form.data['temp'], form.data['species'],
-				form.data['saline'], 1, 0, form.data['notes']]
-			proc_data[g.user.id+'-'+form.data['exp_id']+'0'] = [None]*32
+				form.data['lab'], form.data['temp'], form.data['tanktemp'],
+				form.data['species'], form.data['intra_sol'], form.data['saline'],
+				1, 0, form.data['notes']]
+			proc_data[g.user.id+'-'+form.data['exp_id']+'0'] = [None]*33
 			proc_data[g.user.id+'-'+form.data['exp_id']+'0'][0]='baseline'
 			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
@@ -977,6 +1010,8 @@ def admin_page():
 
 @app.route('/')
 def index():
+	if os.path.exists('temp/'):
+		rmtree('temp/')
 	return render_template('index.html', emailaddress = user_database['Admin'][0])
 
 

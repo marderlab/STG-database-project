@@ -41,7 +41,7 @@
     <div>{{ form.species.label }}: {{ form.species(class="css_class") }}</div><p>
     <div>{{ form.saline.label }}: {{ form.saline(class="css_class") }}</div>  <p>
     <div>{{ form.intra_sol.label }}: {{ form.intra_sol(class="css_class") }}</div>  <p>    
-    <div>{{ form.notes.label }}: {{ form.notes(class="css_class") }}</div><p>
+    <div>{{ form.notes.label }}: {{ form.notes(cols="40", rows="5") }}</div><p>
       {% for error in form.notes.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}                

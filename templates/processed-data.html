@@ -6,7 +6,7 @@
 </head>
 <img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
-  <h3>Enter any available processed data for the experiment {{name}}</h3>
+  <h3>Enter any available processed (numerical) data for the experiment {{name}}</h3>
   <h3>Condition = {{cond}}</h3>
       <div>{{ form.temp.label }}: {{ form.temp(class="css_class") }}</div>
       {% for error in form.temp.errors %}
