@@ -6,7 +6,7 @@
     <form action="/files-readme" method=post>
        <p>
     	<div>{{ form.read_me.label }} <p> {{ form.read_me(cols="80", rows="20") }}</div>  
-    	<input type=submit value="Save Read_Me">
+    	<input type=submit value="Save Read_Me" style="height: 40px; width: 180px">
     </form>
     <p>    
     <p>Nevermind, back to <a href="{{ url_for('experiment_page') }}">experiment</a></p>

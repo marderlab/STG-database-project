@@ -1,0 +1,16 @@
+    <!doctype html>
+    <title>STG Data Warehouse</title>
+    <img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
+    <h3>Please check the appropriate boxes for experiment {{name}}:</h3>
+	<h4>Extracellular data collected during this experiment:</h4>
+	<form action="/checkboxes-page" method=post>	
+	<div>{{ form.nerves }}<div>
+	<h4>Intracellular data collected during this experiment:</h4>
+	<div>{{ form.neurons }}</div>
+	<h4>Other flags for this experiment:</h4>
+	<div>{{ form.flags }}</div>
+       <p>
+    <input type=submit value="Save Experiment" style="height: 40px; width: 180px">
+    </form>
+    <p>    
+    <p>Nevermind, back to <a href="{{ url_for('experiment_page') }}">experiment page</a></p>

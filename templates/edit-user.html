@@ -22,7 +22,7 @@
       {% for error in form.lab.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %}                
-    <p><input type=submit value=Submit>
+    <p><input type=submit value=Submit style="height: 40px; width: 180px">
   </form>
   <p>Nevermind, <a href="{{ url_for('index') }}">back to home</a></p>    
 </div>

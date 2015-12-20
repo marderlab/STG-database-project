@@ -20,7 +20,7 @@
 	  {% for error in form.confirm.errors %}
         <span style="color: red;">{{error}}</span>
       {% endfor %}
-    <p><input type=submit value="Delete File">
+    <p><input type=submit value="Delete File" style="height: 40px; width: 180px">
   </form>
   <body>         
     <p>Nevermind, back to <a href="{{ url_for('experiment_page') }}">experiment</a></p>

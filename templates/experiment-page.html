@@ -17,18 +17,19 @@
       {% endfor %}
       <p>
 	<div>{{ form.action.label }}: {{ form.action(class="css_class") }}</div> 
-    <p><input type=submit value="Act on condition">
+    <p><input type=submit value="Act on condition" style="height: 40px; width: 180px">
   </form>
       <p>Enter data for a <a href="{{ url_for('new_condition') }}">new condition</a> for this experiment</p>  
 
-    <h3>Act on files ({{filecount}}):</h3>
-  <p>{{filenames}}
+    <h3>Act on files ({{filecount}}):</h3><h4>{{filenames}}</h4>
     <p><a href="{{ url_for('file_upload') }}">Upload a file</a> for this experiment</p>  
     <p><a href="{{ url_for('file_delete') }}">Delete a file</a> from this experiment</p> 
     <p><a href="{{ url_for('files_readme') }}">Edit read me file</a> for this experiment</p>        
   <p>
   <h3>More options:</h3>
-  <body>       
+  <body>      
+    <p><a href="{{ url_for('edit_metadata') }}">Edit metadata</a> for this experiment</p> 
+    <p><a href="{{ url_for('checkboxes_page') }}">Edit checkbox flags</a> for this experiment</p>     
     <p>Back to <a href="{{ url_for('upload_page') }}">experiments page</a></p>
     <p><a href="{{ url_for('index') }}">Back to home</a></p>    
   </body>  

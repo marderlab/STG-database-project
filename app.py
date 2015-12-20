@@ -18,7 +18,7 @@ Original code respository @ https://github.com/alhamood/STG-database-project
 
 from flask import Flask, render_template, request, redirect, url_for, g, make_response, send_from_directory
 from flask.ext.login import LoginManager, UserMixin, login_required
-from wtforms import Form, validators, fields
+from wtforms import Form, validators, fields, widgets
 from werkzeug import secure_filename
 from shutil import rmtree
 import os
@@ -41,6 +41,20 @@ global editusername_global
 global exp_name_global
 global cond_num_global
 global cond_name_global
+
+global extra_nerves_global
+global intra_neurons_global
+global experiment_flags_global
+
+extra_nerves_global = ['lvn', 'pdn', 'pyn', 'lpn', 'mvn', 'dgn', 'lgn', 'aln',
+						'stn', 'son', 'ion', 'dpon']
+						
+intra_neurons_global = ['PD', 'LP', 'PY', 'VD', 'IC', 'Int1', 'LG', 'DG', 'GM', 'MG', 
+						'H', 'AGR', 'AB', 'CoG', 'OeG', 'MCN1', 'MCN5']
+
+experiment_flags_global = ['VoltageClamp', 'TempRamp', 'IsolatedNeurons', 'DynamicClamp',
+							'Decentralization', 'Neuromodulation', 'Immuno']
+
 
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
 app.logger.setLevel(logging.ERROR)
@@ -185,11 +199,23 @@ class MetadataForm(Form):
 		('cancer-std', 'Cancer standard'), ('homarus-std', 'Homarus standard'),
 		('pand-std', 'Pan. standard'), ('alt', 'Altered (describe, or provide ref. in notes)')])
 	intra_sol = fields.SelectField('Intracellular solution', choices=[
-		('KCl', 'KCl'), ('KAcetate', 'KAcetate'), ('K2SO4', 'K2SO4'),
-		('Hooper', 'Hooper et al solution')])
+		('none', 'None'), ('KCl', 'KCl'), ('KAcetate', 'KAcetate'), ('K2SO4', 'K2SO4'),
+		('Hooper', 'Hooper et al solution'), ('alt', 'Altered (describe, or provide ref. in notes)')])
 	notes = fields.TextAreaField('Purpose / Notes', [
 		validators.length(max=1000, message='1000 characters max')])
 		
+		
+class CheckboxesForm(Form):
+	global extra_nerves_global
+	global intra_nerves_global
+	global experiment_flags_global
+	nerves = fields.SelectMultipleField('Nerves ', choices = [(nerve, nerve) for nerve in extra_nerves_global], 
+		option_widget=widgets.CheckboxInput(), widget=widgets.ListWidget(prefix_label=False))
+	neurons = fields.SelectMultipleField('Neurons ', choices = [(neuron, neuron) for neuron in intra_neurons_global], 
+		option_widget=widgets.CheckboxInput(), widget=widgets.ListWidget(prefix_label=False))	
+	flags = fields.SelectMultipleField('Experiment Flags ', choices = [(flag, flag) for flag in experiment_flags_global], 
+		option_widget=widgets.CheckboxInput(), widget=widgets.ListWidget(prefix_label=False))														
+
 
 class NewMetadataForm(MetadataForm):
 	exp_id = fields.TextField('Experiment ID (such as lab notebook and page)', [
@@ -270,7 +296,8 @@ def MakeDF(data, column_names):
 
 def MakeMetaDF(data):
 	column_names = ['User', 'Exp ID', 'Exp Date','Animal Date', 'Experimenter', 'Lab',
-		'Temp (C)', 'Tank Temp (C)', 'Species', 'Saline', 'Intra Sol.', 'Conditions', 'Files', 'Notes']
+		'Temp (C)', 'Tank Temp (C)', 'Species', 'Saline', 'Intra Sol.', 'Conditions',
+		'Files', 'Nerves', 'Neurons', 'Flags', 'Notes']
 	df = pd.DataFrame(data.values(), columns = column_names, index=data.keys())
 	df = df.sort_values(by='Exp Date')
 	return df
@@ -352,7 +379,7 @@ def dl_files_page():
 		return render_template('feature-disabled.html')
 	metadata_df = MakeMetaDF(metadata)
 	metadata_df = metadata_df.drop('Notes', axis=1)
-	metadata_df = metadata_df.loc[metadata_df.loc[:,'Files']>0,:]	
+	metadata_df = metadata_df.loc[metadata_df.loc[:,'Files']>1,:]	
 	metadata_df.index = range(len(metadata_df))		
 	if request.method == 'POST':
 		form = FileDownloadForm(request.form)
@@ -434,8 +461,7 @@ def upload_page():
 	
 	This function shows users their uploaded experiments and allows them to 
 	edit or delete them, and also to create new experiments
-	"""
-	
+	"""	
 	global exp_name_global
 	if config['UploadsAllowed'] != 1:
 		return render_template('feature-disabled.html')
@@ -511,7 +537,7 @@ def experiment_page():
 		conditions_df = conditions_df.dropna(axis=1, how='all')
 		table_html = conditions_df.to_html()
 		form = ExperimentActionForm()		
-		filenames = os.listdir(config['FilePath']+exp_name_global)
+		filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
 		filecount = metadata[exp_name_global][12]
 		return render_template('experiment-page.html', table_html=table_html,
 			filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
@@ -547,7 +573,7 @@ def experiment_page():
 			conditions_df.index = range(len(conditions_df))
 			conditions_df = conditions_df.dropna(axis=1, how='all')
 			table_html = conditions_df.to_html()
-			filenames = os.listdir(config['FilePath']+exp_name_global)
+			filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
 			filecount = metadata[exp_name_global][12]
 			return render_template('experiment-page.html', table_html=table_html,
 				filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
@@ -607,7 +633,7 @@ def files_readme():
 		read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt')
 		form = ReadMeForm(read_me = read_me_file.read(10000))
 		read_me_file.close()
-		filenames = os.listdir(config['FilePath']+exp_name_global)	
+		filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
 		return render_template('files-readme-page.html', form=form, filenames=filenames)
 	else:
 		form = ReadMeForm(request.form)
@@ -652,7 +678,7 @@ def file_delete():
 		msg = 'No files to delete.'
 		return render_template('file-upload-message.html', msg=msg)
 	if request.method == 'GET':
-		filenames = os.listdir(config['FilePath']+exp_name_global)
+		filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
 		filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 		table_html = filenames_df.to_html()
 		form = FileDeleteForm()
@@ -672,7 +698,7 @@ def file_delete():
 			msg = 'File deleted.'
 			return render_template('file-upload-message.html', msg=msg)
 		else:
-			filenames = os.listdir(config['FilePath']+exp_name_global)
+			filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
 			filenames_df = pd.DataFrame(filenames, columns=['Filename'])
 			table_html = filenames_df.to_html()		
 			return render_template('file-delete-page.html', table_html=table_html, form=form)
@@ -790,8 +816,9 @@ def edit_metadata():
 		return render_template('user-uploads-disabled.html')		
 	if request.method == 'GET':
 		data = metadata[exp_name_global]
-		form = MetadataForm(experimenter=data[4], notes=data[11],
-			lab=data[5], temp=data[6], species=data[7], saline=data[8])
+		form = MetadataForm(experimenter=data[4], lab=data[5], temp=data[6],
+				 tanktemp=data[7], species=data[8], intra_sol=data[9],
+				 saline=data[10], notes=data[16], nerves=['a'])
 		return render_template('edit-metadata.html', form=form, name=exp_name_global,
 			oldexpdate=data[2], oldandate=data[3])
 	else:
@@ -802,15 +829,36 @@ def edit_metadata():
 			metadata[exp_name_global][4] = form.data['experimenter']
 			metadata[exp_name_global][5] = form.data['lab']
 			metadata[exp_name_global][6] = form.data['temp']
-			metadata[exp_name_global][7] = form.data['species']
-			metadata[exp_name_global][8] = form.data['saline']
-			metadata[exp_name_global][11] = form.data['notes']
+			metadata[exp_name_global][7] = form.data['tanktemp']
+			metadata[exp_name_global][8] = form.data['species']
+			metadata[exp_name_global][9] = form.data['intra_sol']
+			metadata[exp_name_global][10] = form.data['saline']
+			metadata[exp_name_global][16] = form.data['notes']
 			with open('databases/metadata.json', 'w') as outfile:
 				json.dump(metadata, outfile)
-			return redirect(url_for('upload_page'))
+			return redirect(url_for('checkboxes_page'))
 		else:
 			return render_template('edit-metadata.html', name=exp_name_global, form=form)
 
+
+@app.route('/checkboxes-page', methods=['GET', 'POST'])
+@login_required
+def checkboxes_page():
+	global exp_name_global
+	if request.method == 'GET':
+		form = CheckboxesForm(nerves=metadata[exp_name_global][13].split('; '),
+			neurons=metadata[exp_name_global][14].split('; '),
+			flags=metadata[exp_name_global][15].split('; '))
+		return render_template('checkboxes-page.html', form=form, name=exp_name_global)
+	else:
+		form = CheckboxesForm(request.form)
+		metadata[exp_name_global][13] = str('; '.join(form.data['nerves']))
+		metadata[exp_name_global][14] = str('; '.join(form.data['neurons']))
+		metadata[exp_name_global][15] = str('; '.join(form.data['flags']))
+		with open('databases/metadata.json', 'w') as outfile:
+			json.dump(metadata, outfile)
+		return redirect(url_for('experiment_page'))
+	
 
 @app.route('/processed-data', methods=['GET', 'POST'])
 @login_required

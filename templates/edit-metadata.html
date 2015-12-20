@@ -29,11 +29,11 @@
       {% for error in form.lab.errors %}
         <span style="color: red;">[{{ error }}]</span>
       {% endfor %} 
-      <p>        
+      <p>
     <div>{{ form.temp.label }}: {{ form.temp(class="css_class") }}</div>
       {% for error in form.temp.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %} 
+      {% endfor %}  
       <p> 
     <div>{{ form.tanktemp.label }}: {{ form.tanktemp(class="css_class") }}</div>
       {% for error in form.tanktemp.errors %}
@@ -44,13 +44,12 @@
     <p>
     <div>{{ form.saline.label }}: {{ form.saline(class="css_class") }}</div>  
     <p>
-    <div>{{ form.intra_sol.label }}: {{ form.intra_sol(class="css_class") }}</div>  <p>    
-
-    <div>{{ form.notes.label }}: {{ form.notes(cols="40", rows="5") }}</div>
+    <div>{{ form.intra_sol.label }}: {{ form.intra_sol(class="css_class") }}</div><p>  
+    <div>{{ form.notes.label }}:<p>{{ form.notes(cols="40", rows="5") }}</div>
       {% for error in form.notes.errors %}
         <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}                
-    <p><input type=submit value=Submit>
+      {% endfor %}    
+    <p><input type=submit value="Continue to checkboxes" style="height: 40px; width: 180px">
   </form>
   <p>Nevermind, back to <a href="{{ url_for('upload_page') }}">experiments page</a></p>    
 </div>

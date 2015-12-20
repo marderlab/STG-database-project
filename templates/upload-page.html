@@ -7,6 +7,7 @@
 <img src="/static/crabs.jpg" alt="Crabs" style="width:200px;height200px">
 <div class=page>
   <h3>Here are the metadata for your experiments:</h3>
+  <p>Enter a <a href="{{ url_for('new_experiment') }}">new experiment</a></p>    
   {{table_html | safe}} 
   <p><p><h3>Act on experiments:</h3>
   <form method="post" action="/upload-page"> 
@@ -16,11 +17,10 @@
       {% endfor %}
       <p>
 	<div>{{ form.action.label }}: {{ form.action(class="css_class") }}</div> 
-    <p><input type=submit value="Act on experiment">
+    <p><input type=submit value="Act on experiment" style="height: 40px; width: 180px">
   </form> 
   <p><p><h3>Other options:</h3>
   <body>
-    <p>Enter a <a href="{{ url_for('new_experiment') }}">new experiment</a></p>  
     <p>View and <a href="{{ url_for('download_page') }}">download data</a></p>
     <p><a href="{{ url_for('index') }}">Back to home</a></p>    
   </body>   
