@@ -1089,6 +1089,6 @@ def sign_out():
 if __name__ == '__main__':
   app.config["SECRET_KEY"] = "ITSASECRET"
   port = int(os.environ.get("PORT", 5000))
-  app.run(host='0.0.0.0', port=port, debug=True)
+  app.run(host='0.0.0.0', port=port, debug=False)
   # Enable this line (instead of the above) to use https: with an ad-hoc certificate:
   # app.run(host='0.0.0.0', port=port, debug=False, ssl_context='adhoc')
