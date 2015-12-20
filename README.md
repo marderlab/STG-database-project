@@ -83,13 +83,13 @@ lab notebook page), experiment date, species and saline information, lab, as wel
 free-form space for entering notes about your experiment. The only required field here is 
 experiment date, but please enter all data that are available.
 
-The next step is to enter processed data for a "baseline" condition. **PLEASE MAKE SURE 
-BASELINE DATA ARE FROM A FRONT-END ON, UNMANIPULATED PREP!** Other conditions should be 
-entered as new conditions. 
-
-There are no required fields for processed data; there are more fields for processed data
-than you will need for any particular experiment. Three blank decimal fields are also 
-provided. If these are used they should be described in notes on the metadata page. 
+Following this you are taken to a page of checkboxes for more information about what
+types of experiment you are entering. You can select what nerves were recorded from 
+extracellularly, and what neurons you recorded from intracellularly. You can also set
+flags for types of experiments (like decentralization) that will be includes in metadata
+files and can be searched offline after downloading the database. This can help users
+find the files from experiments they are interested in. After this is complete you click
+to save your new experiment.
 
 After submitting you will be taken to the experiment page.
 
@@ -97,12 +97,21 @@ After submitting you will be taken to the experiment page.
 Experiment page
 ---------------
 
+The next step is to enter processed data for a "baseline" condition. A blank version of
+a baseline condition will be created for you. The baseline condition can never be deleted.
+**PLEASE MAKE SURE BASELINE DATA ARE FROM A FRONT-END ON, UNMANIPULATED PREP!** Other 
+conditions should be entered as new conditions. 
+
 This page first shows you a list of all the conditions of your experiment. Upon creating 
 a new experiment, this will include only baseline data. If you also have processed data
 from another condition (such as after decentralization, or in the presence of a drug),
 enter this by clicking on the link for "new condition" in "More options". This will take
 you to a page to enter a new set of processed data that will be associated with this 
-condition. 
+condition.
+
+There are no required fields for processed data; there are more fields for processed data
+than you will need for any particular experiment. Three blank decimal fields are also 
+provided. If these are used they should be described in notes on the metadata page. 
 
 
 Uploading files
@@ -113,6 +122,12 @@ delete or upload a new file by following the links under "More options". Please 
 there is a maximum filesize (100 MB by default), a maximum number of files per experiment
 (15 by default), and a set of allowed file extensions. These parameters can be changed
 by editing the config.json file.
+
+When uploading files you are shown a read_me file that can be edited either before 
+uploading your file, or later following a link from the experiment page. Please add
+information about your uploaded files (such as what conditions they apply to, and what 
+nerves or neurons are on what channels, etc.) to the read me file by using these forms.
+This file is included in the zipped version of the experiment's files when downloaded.
 
 
 Editing and deleting conditions
@@ -129,7 +144,8 @@ Editing and deleting experiments and metadata
 To delete or edit a previously entered experiment, select the experiment by entering its
 index (on the experiments page), choose the appropriate option from the "Action" dropdown,
 and click "Act on experiment". The "Edit / Upload Data (conditions and files)" option will
-take you to the Experiment page as described above.
+take you to the experiment page as described above. You can also edit metadata by 
+following a link from the experiment page.
 
 
 DOWNLOADING DATA
@@ -153,7 +169,7 @@ Uploaded files
 
 Following this link first prompts the user to select an experiment by metadata. It then
 displays a list of uploaded files associated with this experiment, which may be selected
-and downloaded by entering the file index and clicking the download button.
+and downloaded together as a zip file by clicking the download button.
 
 
 ADMINISTRATOR FUNCTIONS
