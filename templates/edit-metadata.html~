@@ -51,6 +51,5 @@
       {% endfor %}    
     <p><input type=submit value="Continue to checkboxes" style="height: 40px; width: 180px">
   </form>
-  <p>Nevermind, back to <a href="{{ url_for('experiment_page') }}">this experiment's page</a></p>    
-  <p>Nevermind, back to <a href="{{ url_for('upload_page') }}">all experiments page</a></p>    
+  <p>Nevermind, back to <a href="{{ url_for('upload_page') }}">experiments page</a></p>    
 </div>
