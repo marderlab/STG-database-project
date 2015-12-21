@@ -393,6 +393,11 @@ def dl_files_page():
 
 
 #Following routes direct to various downloads, as described
+@app.route('/dl-readme')
+def dl_readme():
+  return send_from_directory('.', 'README.md', as_attachment=True)   
+
+
 @app.route('/dl-metadata-page')
 def dl_metadata_page():
   if config['DownloadsAllowed'] != 1:
@@ -538,6 +543,7 @@ def experiment_page():
     table_html = conditions_df.to_html()
     form = ExperimentActionForm()   
     filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
+    metadata[exp_name_global][12] = len(filenames)
     filecount = metadata[exp_name_global][12]
     return render_template('experiment-page.html', table_html=table_html,
       filenames=filenames, filecount=filecount, form=form, name=exp_name_global)

@@ -54,6 +54,39 @@ This must be run as sudo, or the server will not be able to create and remove di
 or save uploaded files. It will crash in this case.
 
 
+ACCESSING DATA
+==============
+
+Uploaded and entered data can be freely downloaded by anyone. To do so follow a link 
+(for example from the home page) to the download page. From here you can download 
+metadata and processed data as .csv and uploaded files for any experiment. See details
+below under "downloading data".
+
+This readme file is available for download as well from a link on the home page.
+
+
+SALINE REFERENCES (please fill-in)
+=================
+
+Cancer standard -
+
+Homarus standard -
+
+Pan. standard -
+
+
+INTRACELLULAR SOLUTION REFERENCES (please fill-in)
+=================================
+
+KCl -
+
+KAcetate -
+
+K2SO4 -
+
+Hooper et al - 
+
+
 WORKFLOW FOR EXPERIMENTERS
 ==========================
 
