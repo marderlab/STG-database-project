@@ -1,0 +1,1 @@
+{"FilePath" : "files/", "AllowedFiletypes" : ["txt", "pdf", "png", "jpg", "jpeg", "abf", "s2r", "tiff"], "MaxUsers": 100, "MaxFilesizeMB": 100, "MaxFiles" : 15, "MaxUserExperiments" : 500, "UploadsAllowed" : 1, "NewUsersAllowed" : 1, "DownloadsAllowed" : 1, "EditsAllowed" : 1}

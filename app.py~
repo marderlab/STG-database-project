@@ -564,7 +564,7 @@ def experiment_page():
         cond_name_global = proc_data[exp_name_global+'_'+cond_num_global][0]          
         proc_data.pop(exp_name_global+'_'+cond_num_global)
         for condnum in range(form.data['identifier']+1, metadata[exp_name_global][11]):
-          proc_data[exp_name_global+'_'+str(condnum-1)]=proc_data.pop(exp_name_global+'_'+str(condnum))
+          proc_data[exp_name_global+str(condnum-1)]=proc_data.pop(exp_name_global+str(condnum))
         metadata[exp_name_global][11]-=1
         with open('databases/metadata.json', 'w') as outfile:
           json.dump(metadata, outfile)
@@ -753,7 +753,7 @@ def delete_experiment():
     form = DeleteForm(request.form)
     if form.data['verify'] == 'DELETE':
       for condnum in range(metadata[exp_name_global][11]):
-        proc_data.pop(exp_name_global+'_'+str(condnum))
+        proc_data.pop(exp_name_global+str(condnum))
       metadata.pop(exp_name_global) 
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
