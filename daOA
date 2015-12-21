@@ -1,0 +1,231 @@
+[33mcommit 1395a4eeb210783155c629181641096869aaa494[m
+Author: Al Hamood <alhamood@brandeis.edu>
+Date:   Mon Dec 21 14:09:34 2015 -0500
+
+    Moved temp directory for downloads to filepath
+
+[33mcommit d992231f94a1bd5d1ea8f4274fa54c8f3ea99af3[m
+Author: Al Hamood <alhamood@brandeis.edu>
+Date:   Mon Dec 21 14:03:22 2015 -0500
+
+    Fixed bugs w/ global variables and experiments (now handled under session)
+
+[33mcommit e5eabef07c6e53862129730f9643a7c895feee00[m
+Author: Al Hamood <alhamood@brandeis.edu>
+Date:   Mon Dec 21 13:07:56 2015 -0500
+
+    testing stage. before trying to change globals
+
+[33mcommit d41d1b4d0e7c841e308e8da737d38f4ac8890f5e[m
+Author: Al Hamood <alhamood@brandeis.edu>
+Date:   Mon Dec 21 11:41:16 2015 -0500
+
+    Fixed condition deletion bug
+
+[33mcommit 9551f4e4cc1af4d690074e86e5a343aa107b05c6[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Mon Dec 21 10:57:31 2015 -0500
+
+    Read me downloadable, files recounted regularly
+
+[33mcommit 749b4861d1eebaa568824a3a804e7381132d753d[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Mon Dec 21 00:38:08 2015 -0500
+
+    Changed some validators for experiment and usernames
+
+[33mcommit 7dd9547560f0c66e785f2d5f89c5b189f9b02d75[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Sun Dec 20 19:00:30 2015 -0500
+
+    eNeuro dataset processed data entered. Also some bug fixes.
+
+[33mcommit ba9e7700150aa61bcfc3667f40a51cb32a5b255b[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Sun Dec 20 15:04:30 2015 -0500
+
+    Debug flag (don't leave True)
+
+[33mcommit 50d6df76c289d92f44ad14f38ffbd9786dc07a4f[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Sun Dec 20 15:03:29 2015 -0500
+
+    Fixed bugs, updated read_me for new features
+
+[33mcommit a961006c3912187d282751ccae029dc9e1c84729[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Sat Dec 19 22:51:25 2015 -0500
+
+    Updated database seed for new metadata
+
+[33mcommit 59afc948db4204e5cd927737513381e757baf5b4[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Sat Dec 19 22:49:52 2015 -0500
+
+    Implements checkboxes for many many things as part of metadata for experiments
+
+[33mcommit 023532d2421ca7f2eda28cedf7e8bfbf54448207[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Sat Dec 19 18:49:56 2015 -0500
+
+    Files now served as zips of all exp. files. Adds read_me for files.
+
+[33mcommit 3bbb5b2c584f3ed9e9d7d84b87849e2290cc395d[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Fri Dec 18 17:37:31 2015 -0500
+
+    Added metadata options, rearranged processed data page, removed null metadata columns from display
+
+[33mcommit 4d773fd7ec67039ce0189eee6da6dd384004766a[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Fri Dec 18 10:57:51 2015 -0500
+
+    Some code cleanup
+
+[33mcommit 0ff8dd12ea477a28b0435ea24e9cf1bea590abd0[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Fri Dec 18 00:54:49 2015 -0500
+
+    Added blank data fields for processed data
+
+[33mcommit d54972e247471b29434939b75efd65f9240aaa4b[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Thu Dec 17 19:15:07 2015 -0500
+
+    English!
+
+[33mcommit 143fe70a6d4f7dd912b13ddffbe6be2455568ff6[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Thu Dec 17 18:28:39 2015 -0500
+
+    Light comments in app.py and README.md included
+
+[33mcommit 9736ed91d3e165c40f2c9321d415fe7f710e08b0[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Thu Dec 17 16:14:09 2015 -0500
+
+    Moves databases, adds administrator approval req. for uploads
+    
+    Basically done besides comments
+
+[33mcommit 6c28994eb838c381e7746eaa3aa4836f8706688f[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Wed Dec 16 23:09:02 2015 -0500
+
+    Implements all controls in config.json
+
+[33mcommit 2188d48db792cb57fc9a6dd163ad856b1ddb0a3d[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Wed Dec 16 17:41:18 2015 -0500
+
+    Barebones databases
+
+[33mcommit c7d84c693f6f3e5981e55957faf4428e763be399[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Wed Dec 16 17:34:13 2015 -0500
+
+    Updated all html files for consistency, image
+
+[33mcommit 6e31cfcab6413408105b1b98acc6a7f3b88768f3[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Wed Dec 16 01:59:52 2015 -0500
+
+    File downloads working
+    
+    Complete working version. Lacks some controls (such as file size and
+    number) and html editing.
+
+[33mcommit 931c864f6d71c8a7317843f17004c24039c0e90f[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Tue Dec 15 23:22:42 2015 -0500
+
+    Working file upload, storage, deletion
+    
+    Still needs file downloads, checks for file number and size
+
+[33mcommit fbe0b6f53a8f3b832deddf951ee2c4415eb7d2a8[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Tue Dec 15 17:12:54 2015 -0500
+
+    .json downloads, combined notes and metadata, naive file uploads
+
+[33mcommit b8b3156c7e4cf1bc3264bbff9b5eb07d3513f4f0[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Tue Dec 15 14:36:08 2015 -0500
+
+    Offers downloads of .csv files
+
+[33mcommit 5c196bd9ad4bbde68acd3e7f03634360e6a26d42[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Tue Dec 15 01:03:47 2015 -0500
+
+    Tool for Admin password change
+
+[33mcommit 0063d09d9b40f58c8e35945d62a2178f56ccd6d8[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Tue Dec 15 00:31:47 2015 -0500
+
+    Multiple conditions for experiments
+    
+    Is a good working skeleton, missing download page and raw data portion.
+
+[33mcommit 9a08a69b84f0d26c70f42fd1d0c44aac283b1345[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Mon Dec 14 19:41:23 2015 -0500
+
+    Fixed moved files -- now working version
+    
+    Up to uploading and editing metadata and processed data, without
+    conditions yet
+
+[33mcommit 20d64c29f546e59400c18a626d45ca0998386792[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Mon Dec 14 19:38:07 2015 -0500
+
+    Databases for experiments working
+    
+    Users can create experiments, enter and edit metadata and processed
+    data. Admin privileges for editing and deleting experiments. Includes
+    seeds and forms for database structures.
+
+[33mcommit 5d4a0837d78729eca6fe90d113e19ca086befdc9[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Sat Dec 12 18:52:42 2015 -0500
+
+    Admin can edit, reset, users can change passwords
+
+[33mcommit d1f94ff115536ccc07bc4ab81b106c2b2abed91e[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Fri Dec 11 19:00:04 2015 -0500
+
+    Admin and edit user pages working
+    
+    Also avoids new-user username collisions and implements a basic config
+    file.
+
+[33mcommit af6024c6c5989aea2f2e68efe9420a46ee0cef87[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Thu Dec 10 19:48:11 2015 -0500
+
+    Can create new users, passwords hashed
+
+[33mcommit d126ca0dc6f41249af0eb334575be5b2cb173959[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Thu Dec 10 12:22:34 2015 -0500
+
+    Working skeleton with naive databases
+    
+    Removed unneeded request_loader, added user database for user
+    information separate from password storage.
+
+[33mcommit 1e327a2428043e8075051a3f7452be82b3ee318c[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Wed Dec 9 18:22:58 2015 -0500
+
+    Simple skeleton with working log-in (naive database)
+
+[33mcommit 4abe34db40134330bbe3a1025f372b4dd289948f[m
+Author: alhamood <alberthamood@gmail.com>
+Date:   Tue Dec 8 22:47:19 2015 -0500
+
+    Rough Skeleton, simple log-in form

@@ -16,7 +16,7 @@ Original code respository @ https://github.com/alhamood/STG-database-project
 @author: Albert W. Hamood
 """
 
-from flask import Flask, render_template, request, redirect, url_for, g, make_response, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, g, make_response, send_from_directory, session
 from flask.ext.login import LoginManager, UserMixin, login_required
 from wtforms import Form, validators, fields, widgets
 from werkzeug import secure_filename
@@ -38,7 +38,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 global editusername_global
-global exp_name_global
 global cond_num_global
 global cond_name_global
 
@@ -374,7 +373,6 @@ def download_page():
 @app.route('/dl-files-page', methods = ['GET', 'POST'])
 def dl_files_page():
   # Directs to file download page
-  global exp_name_global
   if config['DownloadsAllowed'] != 1:
     return render_template('feature-disabled.html')
   metadata_df = MakeMetaDF(metadata)
@@ -384,7 +382,7 @@ def dl_files_page():
   if request.method == 'POST':
     form = FileDownloadForm(request.form)
     if form.data['identifier']>=0 and form.data['identifier']<len(metadata_df):
-      exp_name_global = metadata_df.loc[form.data['identifier']]['User'] \
+      session['exp_name'] = metadata_df.loc[form.data['identifier']]['User'] \
         +'-'+metadata_df.loc[form.data['identifier']]['Exp ID']
       return redirect(url_for('file_download'))
   table_html = metadata_df.to_html()
@@ -467,7 +465,6 @@ def upload_page():
   This function shows users their uploaded experiments and allows them to 
   edit or delete them, and also to create new experiments
   """ 
-  global exp_name_global
   if config['UploadsAllowed'] != 1:
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
@@ -491,7 +488,7 @@ def upload_page():
       if form.data['identifier']<0 or form.data['identifier']>(len(metadata_df)-1) \
                     or form.data['identifier']==None:
         return render_template('upload-message.html', msg='Invalid identifier')
-      exp_name_global = metadata_df.loc[form.data['identifier'], 'User'] \
+      session['exp_name'] = metadata_df.loc[form.data['identifier'], 'User'] \
         +'-'+metadata_df.loc[form.data['identifier'], 'Exp ID'] 
       if form.data['action'] == 'editP':
         return redirect(url_for('experiment_page'))
@@ -521,51 +518,50 @@ def experiment_page():
   if config['UploadsAllowed'] != 1:
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
-    return render_template('user-uploads-disabled.html')    
-  global exp_name_global
+    return render_template('user-uploads-disabled.html')
   global cond_num_global
   global cond_name_global
-  if not os.path.isdir(config['FilePath']+exp_name_global):
-    os.mkdir(config['FilePath']+exp_name_global)  
-  if not os.path.exists(config['FilePath']+exp_name_global+'/READ_ME.txt'):
-    read_me = open(config['FilePath']+exp_name_global+'/READ_ME.txt', 'w')
-    read_me.write('Auto-generated blank read_me for '+exp_name_global)
+  if not os.path.isdir(config['FilePath']+session['exp_name']):
+    os.mkdir(config['FilePath']+session['exp_name'])  
+  if not os.path.exists(config['FilePath']+session['exp_name']+'/READ_ME.txt'):
+    read_me = open(config['FilePath']+session['exp_name']+'/READ_ME.txt', 'w')
+    read_me.write('Auto-generated blank read_me for '+session['exp_name'])
     read_me.close()
-    metadata[exp_name_global][12] += 1
+    metadata[session['exp_name']][12] += 1
     with open('databases/metadata.json', 'w') as outfile:
       json.dump(metadata, outfile)    
   if request.method == 'GET':
     conditions_df = MakeCondDF(proc_data)
-    conditions_df = conditions_df[conditions_df.index.str.contains(exp_name_global)]
+    conditions_df = conditions_df[conditions_df.index.str.contains(session['exp_name'])]
     conditions_df = conditions_df.sort_index()
     conditions_df.index = range(len(conditions_df))
     conditions_df = conditions_df.dropna(axis=1, how='all')
     table_html = conditions_df.to_html()
     form = ExperimentActionForm()   
-    filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
-    metadata[exp_name_global][12] = len(filenames)
-    filecount = metadata[exp_name_global][12]
+    filenames = [str(filename) for filename in os.listdir(config['FilePath']+session['exp_name'])]
+    metadata[session['exp_name']][12] = len(filenames)
+    filecount = metadata[session['exp_name']][12]
     return render_template('experiment-page.html', table_html=table_html,
-      filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
+      filenames=filenames, filecount=filecount, form=form, name=session['exp_name'])
   if request.method == 'POST':
     form = ExperimentActionForm(request.form)
     if form.validate():
-      if form.data['identifier']<0 or form.data['identifier']>metadata[exp_name_global][11]:
+      if form.data['identifier']<0 or form.data['identifier']>metadata[session['exp_name']][11]:
         return render_template('upload-message.html', msg='Invalid identifier')
       if form.data['action'] == 'edit':
         cond_num_global = str(form.data['identifier'])      
-        cond_name_global = proc_data[exp_name_global+'_'+cond_num_global][0]
+        cond_name_global = proc_data[session['exp_name']+'_'+cond_num_global][0]
         return redirect(url_for('processed_data'))
       if form.data['action'] == 'delete':
         if form.data['identifier']==0:
           msg='You cannot delete baseline condition. Delete entire experiment.'
           return render_template('experiment-message.html', msg=msg)
         cond_num_global = str(form.data['identifier'])      
-        cond_name_global = proc_data[exp_name_global+'_'+cond_num_global][0]          
-        proc_data.pop(exp_name_global+'_'+cond_num_global)
-        for condnum in range(form.data['identifier']+1, metadata[exp_name_global][11]):
-          proc_data[exp_name_global+'_'+str(condnum-1)]=proc_data.pop(exp_name_global+'_'+str(condnum))
-        metadata[exp_name_global][11]-=1
+        cond_name_global = proc_data[session['exp_name']+'_'+cond_num_global][0]          
+        proc_data.pop(session['exp_name']+'_'+cond_num_global)
+        for condnum in range(form.data['identifier']+1, metadata[session['exp_name']][11]):
+          proc_data[session['exp_name']+'_'+str(condnum-1)]=proc_data.pop(session['exp_name']+'_'+str(condnum))
+        metadata[session['exp_name']][11]-=1
         with open('databases/metadata.json', 'w') as outfile:
           json.dump(metadata, outfile)
         with open('databases/processed_data.json', 'w') as outfile:
@@ -574,37 +570,36 @@ def experiment_page():
         return render_template('experiment-message.html', msg=msg)
     else:
       conditions_df = (proc_data)
-      conditions_df = conditions_df[conditions_df.index.str.contains(exp_name_global)]
+      conditions_df = conditions_df[conditions_df.index.str.contains(session['exp_name'])]
       conditions_df = conditions_df.sort_index()
       conditions_df.index = range(len(conditions_df))
       conditions_df = conditions_df.dropna(axis=1, how='all')
       table_html = conditions_df.to_html()
-      filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
-      filecount = metadata[exp_name_global][12]
+      filenames = [str(filename) for filename in os.listdir(config['FilePath']+session['exp_name'])]
+      filecount = metadata[session['exp_name']][12]
       return render_template('experiment-page.html', table_html=table_html,
-        filenames=filenames, filecount=filecount, form=form, name=exp_name_global)
+        filenames=filenames, filecount=filecount, form=form, name=session['exp_name'])
 
 
 @app.route('/file-upload', methods=['GET', 'POST'])
 @login_required
 def file_upload():
   # Manages file uploads
-  global exp_name_global
   if config['UploadsAllowed'] != 1:
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
     return render_template('user-uploads-disabled.html')    
-  if metadata[exp_name_global][12] >= config['MaxFiles']:
+  if metadata[session['exp_name']][12] >= config['MaxFiles']:
     msg = 'Cannot upload more files, reached maximum for this experiment.'
     return render_template('file-upload-message.html', msg=msg)
   if request.method == 'GET':
-    read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt')
+    read_me_file = open(config['FilePath']+session['exp_name']+'/READ_ME.txt')
     form = ReadMeForm(read_me = read_me_file.read(10000))
     read_me_file.close()
-    return render_template('file-upload-page.html', name=exp_name_global, form=form)
+    return render_template('file-upload-page.html', name=session['exp_name'], form=form)
   else:
     form = ReadMeForm(request.form)
-    read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt', 'w')
+    read_me_file = open(config['FilePath']+session['exp_name']+'/READ_ME.txt', 'w')
     read_me_file.write(form.data['read_me'])
     read_me_file.close()
     file = request.files['file']
@@ -616,11 +611,11 @@ def file_upload():
     file.seek(0, os.SEEK_SET)
     if file and allowed_file(file.filename):
       filename = secure_filename(file.filename)
-      filenames = os.listdir(config['FilePath']+exp_name_global)
+      filenames = os.listdir(config['FilePath']+session['exp_name'])
       if filename in filenames:
         return render_template('file-upload-message.html', msg='Filename already used.')
-      file.save(config['FilePath']+exp_name_global+'/'+filename)
-      metadata[exp_name_global][12]+=1
+      file.save(config['FilePath']+session['exp_name']+'/'+filename)
+      metadata[session['exp_name']][12]+=1
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
       msg = 'Successfully uploaded '+filename
@@ -634,16 +629,15 @@ def file_upload():
 @login_required
 def files_readme():
   # Direct edit of read me file for files
-  global exp_name_global
   if request.method == 'GET':
-    read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt')
+    read_me_file = open(config['FilePath']+session['exp_name']+'/READ_ME.txt')
     form = ReadMeForm(read_me = read_me_file.read(10000))
     read_me_file.close()
-    filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
+    filenames = [str(filename) for filename in os.listdir(config['FilePath']+session['exp_name'])]
     return render_template('files-readme-page.html', form=form, filenames=filenames)
   else:
     form = ReadMeForm(request.form)
-    read_me_file = open(config['FilePath']+exp_name_global+'/READ_ME.txt', 'w')
+    read_me_file = open(config['FilePath']+session['exp_name']+'/READ_ME.txt', 'w')
     read_me_file.write(form.data['read_me'])
     read_me_file.close()
     return redirect(url_for('experiment_page'))
@@ -652,39 +646,38 @@ def files_readme():
 @app.route('/file-download', methods=['GET', 'POST'])
 def file_download():
   # Manages file downloads
-  global exp_name_global
-  if metadata[exp_name_global][12] == 0:
+  if metadata[session['exp_name']][12] == 0:
     msg = 'No files to download.'
     return render_template('download-message.html', msg=msg)
   if request.method == 'GET':
-    filenames = os.listdir(config['FilePath']+exp_name_global)
+    filenames = os.listdir(config['FilePath']+session['exp_name'])
     filenames_df = pd.DataFrame(filenames, columns=['Filename'])
     table_html = filenames_df.to_html()
     return render_template('file-download-page.html', table_html=table_html)
   else:
-    if os.path.exists('temp/'):
-      rmtree('temp/')
-    os.mkdir('temp')
-    zipf = zipfile.ZipFile('temp/'+exp_name_global+'.zip', 'w')
+    home_dir = os.getcwd()
+    if os.path.exists(config['FilePath']+'temp/'):
+      rmtree(config['FilePath']+'temp/')
+    os.mkdir(config['FilePath'+'temp')
+    zipf = zipfile.ZipFile(config['FilePath']+'temp/'+session['exp_name']+'.zip', 'w')
     os.chdir(config['FilePath'])    
-    zipdir(exp_name_global, zipf)
+    zipdir(session['exp_name'], zipf)
     zipf.close()
-    os.chdir('..')
-    return send_from_directory('temp/', exp_name_global+'.zip', as_attachment=True)   
+    os.chdir(home_dir)
+    return send_from_directory(config['FilePath']+'temp/', session['exp_name']+'.zip', as_attachment=True)   
 
 
 @app.route('/file-delete', methods=['GET', 'POST'])
 @login_required
 def file_delete():
   # Manages file deletion
-  global exp_name_global
   if config['EditsAllowed'] != 1:
     return render_template('feature-disabled.html')
-  if metadata[exp_name_global][12] == 0:
+  if metadata[session['exp_name']][12] == 0:
     msg = 'No files to delete.'
     return render_template('file-upload-message.html', msg=msg)
   if request.method == 'GET':
-    filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
+    filenames = [str(filename) for filename in os.listdir(config['FilePath']+session['exp_name'])]
     filenames_df = pd.DataFrame(filenames, columns=['Filename'])
     table_html = filenames_df.to_html()
     form = FileDeleteForm()
@@ -692,19 +685,19 @@ def file_delete():
   else:
     form = FileDeleteForm(request.form)
     if form.validate():
-      filenames = os.listdir(config['FilePath']+exp_name_global)
+      filenames = os.listdir(config['FilePath']+session['exp_name'])
       filenames_df = pd.DataFrame(filenames, columns=['Filename'])
       if form.data['identifier'] >= len(filenames_df['Filename']) or form.data['identifier'] < 0:
         msg = 'Delete failed. Invalid identifier.'
         return render_template('file-upload-message.html', msg=msg)
-      os.remove(config['FilePath']+exp_name_global+'/'+filenames_df['Filename'][form.data['identifier']])
-      metadata[exp_name_global][12]-=1
+      os.remove(config['FilePath']+session['exp_name']+'/'+filenames_df['Filename'][form.data['identifier']])
+      metadata[session['exp_name']][12]-=1
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
       msg = 'File deleted.'
       return render_template('file-upload-message.html', msg=msg)
     else:
-      filenames = [str(filename) for filename in os.listdir(config['FilePath']+exp_name_global)]
+      filenames = [str(filename) for filename in os.listdir(config['FilePath']+session['exp_name'])]
       filenames_df = pd.DataFrame(filenames, columns=['Filename'])
       table_html = filenames_df.to_html()   
       return render_template('file-delete-page.html', table_html=table_html, form=form)
@@ -714,54 +707,52 @@ def file_delete():
 @login_required
 def new_condition():
   # From experiment page, adds a new condition
-  global exp_name_global
   global cond_name_global
   global cond_num_global
   if request.method == 'GET':
     form = NewConditionForm()
-    return render_template('new-condition.html', form=form, name=exp_name_global)
+    return render_template('new-condition.html', form=form, name=session['exp_name'])
   if request.method == 'POST':
     form = NewConditionForm(request.form)
     if form.validate():
-      cond_num_global = str(metadata[exp_name_global][11])
+      cond_num_global = str(metadata[session['exp_name']][11])
       cond_name_global = form.data['name']
-      proc_data[exp_name_global+'_'+cond_num_global] = [None]*33
-      proc_data[exp_name_global+'_'+cond_num_global][0]=cond_name_global
-      metadata[exp_name_global][11]+=1
+      proc_data[session['exp_name']+'_'+cond_num_global] = [None]*33
+      proc_data[session['exp_name']+'_'+cond_num_global][0]=cond_name_global
+      metadata[session['exp_name']][11]+=1
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
       with open('databases/processed_data.json', 'w') as outfile:
         json.dump(proc_data, outfile)
       return redirect(url_for('processed_data'))
     else:
-      return render_template('new-condition.html', form=form, name=exp_name_global)
+      return render_template('new-condition.html', form=form, name=session['exp_name'])
 
 
 @app.route('/delete-experiment', methods=['GET', 'POST'])
 @login_required
 def delete_experiment():
   # From upload/experiments page, deletes experiment and files
-  global exp_name_global
   if config['EditsAllowed'] != 1:
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
     return render_template('user-uploads-disabled.html')  
   if request.method == 'GET':
     form = DeleteForm()
-    return render_template('delete-experiment.html', name=exp_name_global, form=form)
+    return render_template('delete-experiment.html', name=session['exp_name'], form=form)
   else:
     form = DeleteForm(request.form)
     if form.data['verify'] == 'DELETE':
-      for condnum in range(metadata[exp_name_global][11]):
-        proc_data.pop(exp_name_global+'_'+str(condnum))
-      metadata.pop(exp_name_global) 
+      for condnum in range(metadata[session['exp_name']][11]):
+        proc_data.pop(session['exp_name']+'_'+str(condnum))
+      metadata.pop(session['exp_name']) 
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
       with open('databases/processed_data.json', 'w') as outfile:
         json.dump(proc_data, outfile)
-      if os.path.isdir(config['FilePath']+exp_name_global):
-        rmtree(config['FilePath']+exp_name_global)    
-      msg='Deleted experiment '+exp_name_global
+      if os.path.isdir(config['FilePath']+session['exp_name']):
+        rmtree(config['FilePath']+session['exp_name'])    
+      msg='Deleted experiment '+session['exp_name']
       return render_template('upload-message.html', msg=msg)
     else:
       msg='Did not delete, DELETE was not received.'
@@ -772,7 +763,6 @@ def delete_experiment():
 @login_required
 def new_experiment():
   # From experiments / upload page, defines a new experiment
-  global exp_name_global
   global cond_num_global
   global cond_name_global
   if config['UploadsAllowed'] != 1:
@@ -791,7 +781,7 @@ def new_experiment():
     if form.validate():
       if g.user.id+'-'+form.data['exp_id'] in metadata.keys():
         return render_template('upload-message.html', msg='Experiment ID already exists') 
-      exp_name_global = g.user.id+'-'+form.data['exp_id'] 
+      session['exp_name'] = g.user.id+'-'+form.data['exp_id'] 
       metadata[g.user.id+'-'+form.data['exp_id']] = [
         g.user.id, form.data['exp_id'], str(form.data['exp_date']),
         str(form.data['animal_date']), form.data['experimenter'],
@@ -815,71 +805,69 @@ def new_experiment():
 @login_required
 def edit_metadata():
   # From upload/experiments page, edits metadata for selected experiment
-  global exp_name_global
   if config['EditsAllowed'] != 1:
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
     return render_template('user-uploads-disabled.html')    
   if request.method == 'GET':
-    data = metadata[exp_name_global]
+    data = metadata[session['exp_name']]
     form = MetadataForm(experimenter=data[4], lab=data[5], temp=data[6],
          tanktemp=data[7], species=data[8], intra_sol=data[9],
          saline=data[10], notes=data[16], nerves=['a'])
-    return render_template('edit-metadata.html', form=form, name=exp_name_global,
+    return render_template('edit-metadata.html', form=form, name=session['exp_name'],
       oldexpdate=data[2], oldandate=data[3])
   else:
     form = MetadataForm(request.form)
     if form.validate():
-      metadata[exp_name_global][2] = str(form.data['exp_date'])
-      metadata[exp_name_global][3] = str(form.data['animal_date'])
-      metadata[exp_name_global][4] = form.data['experimenter']
-      metadata[exp_name_global][5] = form.data['lab']
-      metadata[exp_name_global][6] = form.data['temp']
-      metadata[exp_name_global][7] = form.data['tanktemp']
-      metadata[exp_name_global][8] = form.data['species']
-      metadata[exp_name_global][9] = form.data['intra_sol']
-      metadata[exp_name_global][10] = form.data['saline']
-      metadata[exp_name_global][16] = form.data['notes']
+      metadata[session['exp_name']][2] = str(form.data['exp_date'])
+      metadata[session['exp_name']][3] = str(form.data['animal_date'])
+      metadata[session['exp_name']][4] = form.data['experimenter']
+      metadata[session['exp_name']][5] = form.data['lab']
+      metadata[session['exp_name']][6] = form.data['temp']
+      metadata[session['exp_name']][7] = form.data['tanktemp']
+      metadata[session['exp_name']][8] = form.data['species']
+      metadata[session['exp_name']][9] = form.data['intra_sol']
+      metadata[session['exp_name']][10] = form.data['saline']
+      metadata[session['exp_name']][16] = form.data['notes']
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
       return redirect(url_for('checkboxes_page'))
     else:
-      return render_template('edit-metadata.html', name=exp_name_global, form=form)
+      return render_template('edit-metadata.html', name=session['exp_name'], form=form)
 
 
 @app.route('/checkboxes-page', methods=['GET', 'POST'])
 @login_required
 def checkboxes_page():
-  global exp_name_global
   if request.method == 'GET':
-    if metadata[exp_name_global][13] is None:
+    if metadata[session['exp_name']][13] is None:
         nerves = None
     else:
-        nerves = metadata[exp_name_global][13].split('; ')
-    if metadata[exp_name_global][14] is None:
+        nerves = metadata[session['exp_name']][13].split('; ')
+    if metadata[session['exp_name']][14] is None:
         neurons = None
     else:
-        neurons = metadata[exp_name_global][14].split('; ')    
-    if metadata[exp_name_global][15] is None:
+        neurons = metadata[session['exp_name']][14].split('; ')    
+    if metadata[session['exp_name']][15] is None:
         flags = None
     else:
-        flags = metadata[exp_name_global][15].split('; ')        
+        flags = metadata[session['exp_name']][15].split('; ')        
     form = CheckboxesForm(nerves=nerves, neurons=neurons, flags=flags)
-    return render_template('checkboxes-page.html', form=form, name=exp_name_global)
+    return render_template('checkboxes-page.html', form=form, name=session['exp_name'])
   else:
     form = CheckboxesForm(request.form)
     if form.data['nerves'] is None:
-      metadata[exp_name_global][13] = ''
+      metadata[session['exp_name']][13] = ''
     else:
-      metadata[exp_name_global][13] = str('; '.join(form.data['nerves']))
+      metadata[session['exp_name']][13] = str('; '.join(form.data['nerves']))
     if form.data['neurons'] is None:
-      metadata[exp_name_global][14] = ''
+      metadata[session['exp_name']][14] = ''
     else:
-      metadata[exp_name_global][14] = str('; '.join(form.data['neurons']))
+      metadata[session['exp_name']][14] = str('; '.join(form.data['neurons']))
     if form.data['flags'] is None:
-      metadata[exp_name_global][15] = ''
+      metadata[session['exp_name']][15] = ''
     else:
-      metadata[exp_name_global][15] = str('; '.join(form.data['flags']))
+      metadata[session['exp_name']][15] = str('; '.join(form.data['flags']))
     with open('databases/metadata.json', 'w') as outfile:
       json.dump(metadata, outfile)
     return redirect(url_for('experiment_page'))
@@ -892,11 +880,10 @@ def processed_data():
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
     return render_template('user-uploads-disabled.html')    
-  global exp_name_global
   global cond_num_global
   global cond_name_global
   if request.method == 'GET':
-    data = proc_data[exp_name_global+'_'+cond_num_global]
+    data = proc_data[session['exp_name']+'_'+cond_num_global]
     form = ProcessedDataForm(exp_temp=data[1], pyl_hz=data[2], pyl_cycvar=data[3], pyl_niqr=data[4],
       gas_hz=data[5], gas_cycvar=data[6], gas_niqur=data[7], pd_off=data[8],
       pd_spikes=data[9], lp_on=data[10], lp_off=data[11], lp_spikes=data[12],
@@ -905,12 +892,11 @@ def processed_data():
       dg_on=data[21], dg_off=data[22], dg_spikes=data[23], gm_on=data[24],
       gm_off=data[25], gm_spikes=data[26], mg_on=data[27], mg_off=data[28],
       mg_spikes=data[29], blank1=data[30], blank2=data[31], blank3=data[32])
-    return render_template('processed-data.html', form=form, name=exp_name_global, cond=cond_name_global)
+    return render_template('processed-data.html', form=form, name=session['exp_name'], cond=cond_name_global)
   else:
     form = ProcessedDataForm(request.form)
     if form.validate():
-      print(form.data['exp_temp'])
-      proc_data[exp_name_global+'_'+cond_num_global] = [cond_name_global,
+      proc_data[session['exp_name']+'_'+cond_num_global] = [cond_name_global,
         form.data['exp_temp'], form.data['pyl_hz'],
         form.data['pyl_cycvar'], form.data['pyl_niqr'], form.data['gas_hz'],
         form.data['gas_cycvar'], form.data['gas_niqr'], form.data['pd_off'],
@@ -926,7 +912,7 @@ def processed_data():
         json.dump(proc_data, outfile)
       return redirect(url_for('experiment_page'))
     else:
-      return render_template('processed-data.html', form=form, name=exp_name_global, cond=cond_name_global)
+      return render_template('processed-data.html', form=form, name=session['exp_name'], cond=cond_name_global)
 
 
 @app.route('/new-user', methods=['GET', 'POST'])
@@ -1106,6 +1092,6 @@ def sign_out():
 if __name__ == '__main__':
   app.config["SECRET_KEY"] = "ITSASECRET"
   port = int(os.environ.get("PORT", 80))
-  app.run(host='0.0.0.0', port=port, debug=False, threadeddd=True)
+  app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
   # Enable this line (instead of the above) to use https: with an ad-hoc certificate:
   # app.run(host='0.0.0.0', port=port, debug=False, ssl_context='adhoc')
