@@ -101,7 +101,7 @@ class EditUserForm(Form):
   email = fields.TextField('email', [
     validators.Email(message='Not an email address.')])
   surname = fields.TextField('Surname', [
-    validators.Length(max=25, message='Sorry 25 characters max'),
+    validators.Length(max=25, message='25 characters max'),
     validators.InputRequired(message='Surname required')])
   lab = fields.TextField('Lab PI surname', [
     validators.Length(max=20, message='20 characters max'),
@@ -110,8 +110,8 @@ class EditUserForm(Form):
 
 class UserForm(EditUserForm):
   username = fields.TextField('Username', [
-    validators.Length(max=12, message='Maximum 12 characters'),
-    validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
+    validators.Length(max=20, message='Maximum 20 characters'),
+    validators.Regexp(r'^[\w_]+$', message='Alphanumeric characters only (underscore _ ok)'),
     validators.InputRequired(message='Username is required')])
 
 
@@ -170,7 +170,7 @@ class FileDeleteForm(Form):
 class NewConditionForm(Form):
   name = fields.TextField('Condition Name', [
     validators.length(min=2, max=20, message='2-20 characters'),
-    validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
+    validators.Regexp(r'^[\w_]+$', message='Alphanumeric characters only (underscore _ ok)'),
     validators.InputRequired(message='Must enter a condition name')])
 
 
@@ -188,13 +188,13 @@ class MetadataForm(Form):
   animal_date = fields.DateField('Animal Arrival Date', [
     validators.Optional()], format='%m/%d/%Y')
   experimenter = fields.TextField('Experimenter Surname', [
-    validators.Length(max=15, message='15 characters max')])
+    validators.Length(max=20, message='20 characters max')])
   lab = fields.TextField('Lab PI Surname', [
-    validators.Length(max=15, message='15 characters max')])  
+    validators.Length(max=20, message='20 characters max')])  
   temp = fields.IntegerField('Experiment Baseline Temperature in C', [validators.Optional()])
   tanktemp = fields.IntegerField('Animal Tank Temperature in C', [validators.Optional()])
   species = fields.TextField('Species', [
-    validators.Length(max=15, message='15 characters max')])
+    validators.Length(max=20, message='20 characters max')])
   saline = fields.SelectField('Saline', choices = [
     ('cancer-std', 'Cancer standard'), ('homarus-std', 'Homarus standard'),
     ('pand-std', 'Pan. standard'), ('alt', 'Altered (describe, or provide ref. in notes)')])
@@ -219,8 +219,8 @@ class CheckboxesForm(Form):
 
 class NewMetadataForm(MetadataForm):
   exp_id = fields.TextField('Experiment ID (such as lab notebook and page)', [
-    validators.Length(max=10, message='10 characters max'),
-    validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
+    validators.Length(max=20, message='20 characters max'),
+    validators.Regexp(r'^[\w_]+$', message='Alphanumeric characters only (underscore _ ok)'),
     validators.InputRequired(message='You must provide a unique ID')])
 
 
