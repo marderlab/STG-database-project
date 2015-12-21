@@ -53,7 +53,7 @@ intra_neurons_global = ['PD', 'LP', 'PY', 'VD', 'IC', 'Int1', 'LG', 'DG', 'GM', 
             'H', 'AGR', 'AB', 'CoG', 'OeG', 'MCN1', 'MCN5']
 
 experiment_flags_global = ['VoltageClamp', 'TempRamp', 'IsolatedNeurons', 'DynamicClamp',
-              'Decentralization', 'Neuromodulation', 'Immuno']
+              'Decentralization', 'Neuromodulation', 'Immuno', 'Published']
 
 
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -169,7 +169,7 @@ class FileDeleteForm(Form):
 
 class NewConditionForm(Form):
   name = fields.TextField('Condition Name', [
-    validators.length(min=2, max=15, message='2-15 characters'),
+    validators.length(min=2, max=20, message='2-20 characters'),
     validators.Regexp(r'^[\w_-]+$', message='Alphanumeric characters only (- and _ ok)'),
     validators.InputRequired(message='Must enter a condition name')])
 
@@ -225,66 +225,66 @@ class NewMetadataForm(MetadataForm):
 
 
 class ProcessedDataForm(Form):
-  temp = fields.IntegerField('Condition temperature in C', [validators.Optional()])
-  pyl_hz = fields.DecimalField('Pyloric frequency (Hz)', [validators.Optional()])
-  pyl_cycvar = fields.DecimalField('Pyloric cyc-to-cyc var (%)', [validators.Optional()])
-  pyl_niqr = fields.DecimalField('Pyloric frequency NIQR', [validators.Optional()])
-  gas_hz = fields.DecimalField('Gastric frequency (Hz)', [validators.Optional()])
-  gas_cycvar = fields.DecimalField('Gastric cyc-to-cyc var (%)', [validators.Optional()])
-  gas_niqr = fields.DecimalField('Gastric frequency NIQR', [validators.Optional()])
+  exp_temp = fields.IntegerField('Condition temperature in C', [validators.Optional()])
+  pyl_hz = fields.DecimalField('Pyloric frequency (Hz)', [validators.Optional()], places=5)
+  pyl_cycvar = fields.DecimalField('Pyloric cyc-to-cyc var (%)', [validators.Optional()], places=5)
+  pyl_niqr = fields.DecimalField('Pyloric frequency NIQR', [validators.Optional()], places=5)
+  gas_hz = fields.DecimalField('Gastric frequency (Hz)', [validators.Optional()], places=5)
+  gas_cycvar = fields.DecimalField('Gastric cyc-to-cyc var (%)', [validators.Optional()], places=5)
+  gas_niqr = fields.DecimalField('Gastric frequency NIQR', [validators.Optional()], places=5)
   pd_off = fields.DecimalField('PD off phase (duty cycle, 0-1)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()])
+    validators.Optional()], places=5)
   pd_spikes = fields.DecimalField('PD spikes/burst', [validators.Optional()])
   lp_on = fields.DecimalField('LP on phase (0-1, from PD start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()]) 
+    validators.Optional()], places=5) 
   lp_off = fields.DecimalField('LP off phase (0-1, from PD start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()])
+    validators.Optional()], places=5)
   lp_spikes = fields.DecimalField('LP spikes/burst', [validators.Optional()])
   py_on = fields.DecimalField('PY on phase (0-1, from PD start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()]) 
+    validators.Optional()], places=5) 
   py_off = fields.DecimalField('PY off phase (0-1, from PD start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()])
+    validators.Optional()], places=5)
   py_spikes = fields.DecimalField('PY spikes/burst', [validators.Optional()]) 
   vd_on = fields.DecimalField('VD on phase (0-1, from PD start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()]) 
+    validators.Optional()], places=5) 
   vd_off = fields.DecimalField('VD off phase (0-1, from PD start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()])
+    validators.Optional()], places=5)
   vd_spikes = fields.DecimalField('VD spikes/burst', [validators.Optional()])
   lg_off = fields.DecimalField('Gastric LG off phase (duty cycle, 0-1', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()])
+    validators.Optional()], places=5)
   lg_spikes = fields.DecimalField('Gastric LG spikes/burst', [validators.Optional()]) 
   dg_on = fields.DecimalField('Gastric DG on phase (0-1, from LG start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()]) 
+    validators.Optional()], places=5) 
   dg_off = fields.DecimalField('Gastric DG off phase (0-1, from LG start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()])
+    validators.Optional()], places=5)
   dg_spikes = fields.DecimalField('Gastric DG spikes/burst', [validators.Optional()])
   gm_on = fields.DecimalField('Gastric GM on phase (0-1, from LG start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()]) 
+    validators.Optional()], places=5) 
   gm_off = fields.DecimalField('Gastric GM off phase (0-1, from LG start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()])
+    validators.Optional()], places=5)
   gm_spikes = fields.DecimalField('Gastric GM spikes/burst', [validators.Optional()])
   mg_on = fields.DecimalField('Gastric MG on phase (0-1, from LG start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()]) 
+    validators.Optional()], places=5) 
   mg_off = fields.DecimalField('Gastric MG off phase (0-1, from LG start)', [
     validators.NumberRange(min=0, max=1, message='range 0-1 (not radians)'),
-    validators.Optional()])
+    validators.Optional()], places=5)
   mg_spikes = fields.DecimalField('Gastric MG spikes/burst', [validators.Optional()])
-  blank1 = fields.DecimalField('Blank Field 1 (describe in notes)', [validators.Optional()])
-  blank2 = fields.DecimalField('Blank Field 2 (describe in notes)', [validators.Optional()])
-  blank3 = fields.DecimalField('Blank Field 3 (describe in notes)', [validators.Optional()])
+  blank1 = fields.DecimalField('Blank Field 1 (describe in notes)', [validators.Optional()], places=5)
+  blank2 = fields.DecimalField('Blank Field 2 (describe in notes)', [validators.Optional()], places=5)
+  blank3 = fields.DecimalField('Blank Field 3 (describe in notes)', [validators.Optional()], places=5)
 
 
 # Functions for making dataframes from databases to serve in html templates     
@@ -548,15 +548,15 @@ def experiment_page():
         return render_template('upload-message.html', msg='Invalid identifier')
       if form.data['action'] == 'edit':
         cond_num_global = str(form.data['identifier'])      
-        cond_name_global = proc_data[exp_name_global+cond_num_global][0]
+        cond_name_global = proc_data[exp_name_global+'_'+cond_num_global][0]
         return redirect(url_for('processed_data'))
       if form.data['action'] == 'delete':
         if form.data['identifier']==0:
           msg='You cannot delete baseline condition. Delete entire experiment.'
           return render_template('experiment-message.html', msg=msg)
         cond_num_global = str(form.data['identifier'])      
-        cond_name_global = proc_data[exp_name_global+cond_num_global][0]          
-        proc_data.pop(exp_name_global+cond_num_global)
+        cond_name_global = proc_data[exp_name_global+'_'+cond_num_global][0]          
+        proc_data.pop(exp_name_global+'_'+cond_num_global)
         for condnum in range(form.data['identifier']+1, metadata[exp_name_global][11]):
           proc_data[exp_name_global+str(condnum-1)]=proc_data.pop(exp_name_global+str(condnum))
         metadata[exp_name_global][11]-=1
@@ -719,8 +719,8 @@ def new_condition():
     if form.validate():
       cond_num_global = str(metadata[exp_name_global][11])
       cond_name_global = form.data['name']
-      proc_data[exp_name_global+cond_num_global] = [None]*33
-      proc_data[exp_name_global+cond_num_global][0]=cond_name_global
+      proc_data[exp_name_global+'_'+cond_num_global] = [None]*33
+      proc_data[exp_name_global+'_'+cond_num_global][0]=cond_name_global
       metadata[exp_name_global][11]+=1
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
@@ -792,8 +792,8 @@ def new_experiment():
         form.data['lab'], form.data['temp'], form.data['tanktemp'],
         form.data['species'], form.data['intra_sol'], form.data['saline'],
         1, 0, "", "", "", form.data['notes']]
-      proc_data[g.user.id+'-'+form.data['exp_id']+'0'] = [None]*33
-      proc_data[g.user.id+'-'+form.data['exp_id']+'0'][0]='baseline'
+      proc_data[g.user.id+'-'+form.data['exp_id']+'_0'] = [None]*33
+      proc_data[g.user.id+'-'+form.data['exp_id']+'_0'][0]='baseline'
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
       with open('databases/processed_data.json', 'w') as outfile:
@@ -846,9 +846,19 @@ def edit_metadata():
 def checkboxes_page():
   global exp_name_global
   if request.method == 'GET':
-    form = CheckboxesForm(nerves=metadata[exp_name_global][13].split('; '),
-      neurons=metadata[exp_name_global][14].split('; '),
-      flags=metadata[exp_name_global][15].split('; '))
+    if metadata[exp_name_global][13] is None:
+        nerves = None
+    else:
+        nerves = metadata[exp_name_global][13].split('; ')
+    if metadata[exp_name_global][14] is None:
+        neurons = None
+    else:
+        neurons = metadata[exp_name_global][14].split('; ')    
+    if metadata[exp_name_global][15] is None:
+        flags = None
+    else:
+        flags = metadata[exp_name_global][15].split('; ')        
+    form = CheckboxesForm(nerves=nerves, neurons=neurons, flags=flags)
     return render_template('checkboxes-page.html', form=form, name=exp_name_global)
   else:
     form = CheckboxesForm(request.form)
@@ -880,8 +890,8 @@ def processed_data():
   global cond_num_global
   global cond_name_global
   if request.method == 'GET':
-    data = proc_data[exp_name_global+cond_num_global]
-    form = ProcessedDataForm(pyl_hz=data[2], pyl_cycvar=data[3], pyl_niqr=data[4],
+    data = proc_data[exp_name_global+'_'+cond_num_global]
+    form = ProcessedDataForm(exp_temp=data[1], pyl_hz=data[2], pyl_cycvar=data[3], pyl_niqr=data[4],
       gas_hz=data[5], gas_cycvar=data[6], gas_niqur=data[7], pd_off=data[8],
       pd_spikes=data[9], lp_on=data[10], lp_off=data[11], lp_spikes=data[12],
       py_on=data[13], py_off=data[14], py_spikes=data[15], vd_on=data[16],
@@ -893,8 +903,9 @@ def processed_data():
   else:
     form = ProcessedDataForm(request.form)
     if form.validate():
-      proc_data[exp_name_global+cond_num_global] = [cond_name_global,
-        form.data['temp'], form.data['pyl_hz'],
+      print(form.data['exp_temp'])
+      proc_data[exp_name_global+'_'+cond_num_global] = [cond_name_global,
+        form.data['exp_temp'], form.data['pyl_hz'],
         form.data['pyl_cycvar'], form.data['pyl_niqr'], form.data['gas_hz'],
         form.data['gas_cycvar'], form.data['gas_niqr'], form.data['pd_off'],
         form.data['pd_spikes'], form.data['lp_on'], form.data['lp_off'],

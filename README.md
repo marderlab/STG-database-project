@@ -199,6 +199,15 @@ disturb the .json formatting. The parameters are:
 - "EditsAllowed" : 1 allows editing, anything else disables all editing
 
 
+Checkboxes for metadata
+-----------------------
+
+These can easily be added to. Open the python file app.py and you can find where these 
+are defined, near line 50. Adding checkboxes to this list will work fine and nothing will
+break. Deleting or editing existing labels however, will be a problem if any experiments
+use these labels in their metadata. 
+
+
 Admin server account
 --------------------
 
