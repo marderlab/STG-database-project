@@ -46,7 +46,7 @@ in this distribution in /Database-seeds
 
 All these files should be in the basic distribution on github.
 
-When ready, start the server from the terminal by running:
+When ready, start the server from the terminal by running (in Linux or OSX terminal):
 
 **sudo python app.py**
 
@@ -94,7 +94,8 @@ To include your data in the STG database, you will first need to create an accou
 server. This can be done by the "Create new account" link on the homepage. Following this,
 your account will need to be activated for uploads by the administrator before you are
 allowed to upload files or enter new experiments. Email the administrator to ask for this
-activation; a link to send the administrator an email is on the homepage.
+activation; a link to send the administrator an email is on the homepage. (Note: the 
+server stores your password in hashed form (unsalted SHA256))
 
 Once you have followed this procedure and have an activated account, you can log in and 
 enter experiments. Basic details about accounts such as user info and password can be
@@ -108,10 +109,13 @@ Entering a new experiment
 -------------------------
 
 From the homepage, click on the "My Experiments Page" link. This takes you to a page that
-shows the metadata for all the experiments you have entered so far. Under "Other options",
-click "Enter a new experiment". 
+shows the metadata for all the experiments you have entered so far. At the top,
+click "Enter a new experiment".
 
-You will then be prompted to enter metadata for the experiment including a name (such as 
+This page initially shows you a table of metadata for all of your entered experiments. When
+you first arrive here, this will be empty, so creating a new experiment is your first step.
+
+You will next be prompted to enter metadata for the experiment including a name (such as 
 lab notebook page), experiment date, species and saline information, lab, as well as a
 free-form space for entering notes about your experiment. The only required field here is 
 experiment date, but please enter all data that are available.
@@ -157,10 +161,20 @@ there is a maximum filesize (100 MB by default), a maximum number of files per e
 by editing the config.json file.
 
 When uploading files you are shown a read_me file that can be edited either before 
-uploading your file, or later following a link from the experiment page. Please add
-information about your uploaded files (such as what conditions they apply to, and what 
-nerves or neurons are on what channels, etc.) to the read me file by using these forms.
-This file is included in the zipped version of the experiment's files when downloaded.
+uploading your file, or later following a link from the experiment page. 
+
+** There is one read_me file for each experiment, that you should edit as you upload
+files to describe them. This read_me will be packaged in a zip file with the uploaded
+files from your experiment when downloaded. **
+
+Please add information about your uploaded files (such as what conditions they apply to, 
+and what nerves or neurons are on what channels, etc.) to the read me file by using
+this forms. You can also edit the read_me file straight from a link on the experiment page.
+
+Feel free to upload more detailed .txt files or .pdf files describing your experiment 
+in detail. The read_me file is just so a user can make sense of the files after download.
+Check out some of the previously uploaded experiments (download their uploaded files)
+to see how this works.
 
 
 Editing and deleting conditions
@@ -194,7 +208,8 @@ Metadata and processed data for all conditions
 
 These can be viewed or downloaded as .json or .csv files. For metadata, there is also an
 option to download without the "Notes" field. This field allows large text inputs and 
-may make .csv files unwieldy. 
+may make .csv files unwieldy. These are shown sorted by experiment date. Searching 
+functions aren't available here -- download the dataset and do the analysis offline.
 
 
 Uploaded files
