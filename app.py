@@ -37,10 +37,6 @@ app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-global editusername_global
-global cond_num_global
-global cond_name_global
-
 global extra_nerves_global
 global intra_neurons_global
 global experiment_flags_global
@@ -348,7 +344,6 @@ def nope():
 @app.route('/login', methods=['POST'])
 def login():
   # Checks password and logs in user if credentials are valid
-  global editusername_global
   form = LoginForm(request.form)
   if form.validate():
     user = load_user(form.username.data)
@@ -357,7 +352,7 @@ def login():
     if hashlib.sha256(form.data['password']).hexdigest() \
         == user_pdatabase[user.id]:
       flask.ext.login.login_user(user)
-      editusername_global = g.user.id
+      session['editusername'] = g.user.id
       return redirect(url_for('index'))
   return render_template('/unauthorized-page.html')
 
@@ -519,8 +514,6 @@ def experiment_page():
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
     return render_template('user-uploads-disabled.html')
-  global cond_num_global
-  global cond_name_global
   if not os.path.isdir(config['FilePath']+session['exp_name']):
     os.mkdir(config['FilePath']+session['exp_name'])  
   if not os.path.exists(config['FilePath']+session['exp_name']+'/READ_ME.txt'):
@@ -547,18 +540,18 @@ def experiment_page():
     form = ExperimentActionForm(request.form)
     if form.validate():
       if form.data['identifier']<0 or form.data['identifier']>metadata[session['exp_name']][11]:
-        return render_template('upload-message.html', msg='Invalid identifier')
+        return render_template('experiment-message.html', msg='Invalid identifier')
       if form.data['action'] == 'edit':
-        cond_num_global = str(form.data['identifier'])      
-        cond_name_global = proc_data[session['exp_name']+'_'+cond_num_global][0]
+        session['cond_num'] = str(form.data['identifier'])      
+        session['cond_name'] = proc_data[session['exp_name']+'_'+session['cond_num']][0]
         return redirect(url_for('processed_data'))
       if form.data['action'] == 'delete':
         if form.data['identifier']==0:
           msg='You cannot delete baseline condition. Delete entire experiment.'
           return render_template('experiment-message.html', msg=msg)
-        cond_num_global = str(form.data['identifier'])      
-        cond_name_global = proc_data[session['exp_name']+'_'+cond_num_global][0]          
-        proc_data.pop(session['exp_name']+'_'+cond_num_global)
+        session['cond_num'] = str(form.data['identifier'])      
+        session['cond_name'] = proc_data[session['exp_name']+'_'+session['cond_num']][0]          
+        proc_data.pop(session['exp_name']+'_'+session['cond_num'])
         for condnum in range(form.data['identifier']+1, metadata[session['exp_name']][11]):
           proc_data[session['exp_name']+'_'+str(condnum-1)]=proc_data.pop(session['exp_name']+'_'+str(condnum))
         metadata[session['exp_name']][11]-=1
@@ -566,7 +559,7 @@ def experiment_page():
           json.dump(metadata, outfile)
         with open('databases/processed_data.json', 'w') as outfile:
           json.dump(proc_data, outfile)
-        msg='Condition '+cond_name_global+' deleted.'
+        msg='Condition '+session['cond_name']+' deleted.'
         return render_template('experiment-message.html', msg=msg)
     else:
       conditions_df = (proc_data)
@@ -707,18 +700,16 @@ def file_delete():
 @login_required
 def new_condition():
   # From experiment page, adds a new condition
-  global cond_name_global
-  global cond_num_global
   if request.method == 'GET':
     form = NewConditionForm()
     return render_template('new-condition.html', form=form, name=session['exp_name'])
   if request.method == 'POST':
     form = NewConditionForm(request.form)
     if form.validate():
-      cond_num_global = str(metadata[session['exp_name']][11])
-      cond_name_global = form.data['name']
-      proc_data[session['exp_name']+'_'+cond_num_global] = [None]*33
-      proc_data[session['exp_name']+'_'+cond_num_global][0]=cond_name_global
+      session['cond_num'] = str(metadata[session['exp_name']][11])
+      session['cond_name'] = form.data['name']
+      proc_data[session['exp_name']+'_'+session['cond_num']] = [None]*33
+      proc_data[session['exp_name']+'_'+session['cond_num']][0]=session['cond_name']
       metadata[session['exp_name']][11]+=1
       with open('databases/metadata.json', 'w') as outfile:
         json.dump(metadata, outfile)
@@ -763,8 +754,6 @@ def delete_experiment():
 @login_required
 def new_experiment():
   # From experiments / upload page, defines a new experiment
-  global cond_num_global
-  global cond_name_global
   if config['UploadsAllowed'] != 1:
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
@@ -794,8 +783,8 @@ def new_experiment():
         json.dump(metadata, outfile)
       with open('databases/processed_data.json', 'w') as outfile:
         json.dump(proc_data, outfile)
-      cond_num_global = '0'
-      cond_name_global = 'baseline'
+      session['cond_num'] = '0'
+      session['cond_name'] = 'baseline'
       return redirect(url_for('checkboxes_page'))
     else:
       return render_template('new-experiment.html', name=g.user.id, form=form)
@@ -880,10 +869,8 @@ def processed_data():
     return render_template('feature-disabled.html')
   if user_database[g.user.id][3] == 0:
     return render_template('user-uploads-disabled.html')    
-  global cond_num_global
-  global cond_name_global
   if request.method == 'GET':
-    data = proc_data[session['exp_name']+'_'+cond_num_global]
+    data = proc_data[session['exp_name']+'_'+session['cond_num']]
     form = ProcessedDataForm(exp_temp=data[1], pyl_hz=data[2], pyl_cycvar=data[3], pyl_niqr=data[4],
       gas_hz=data[5], gas_cycvar=data[6], gas_niqur=data[7], pd_off=data[8],
       pd_spikes=data[9], lp_on=data[10], lp_off=data[11], lp_spikes=data[12],
@@ -892,11 +879,11 @@ def processed_data():
       dg_on=data[21], dg_off=data[22], dg_spikes=data[23], gm_on=data[24],
       gm_off=data[25], gm_spikes=data[26], mg_on=data[27], mg_off=data[28],
       mg_spikes=data[29], blank1=data[30], blank2=data[31], blank3=data[32])
-    return render_template('processed-data.html', form=form, name=session['exp_name'], cond=cond_name_global)
+    return render_template('processed-data.html', form=form, name=session['exp_name'], cond=session['cond_name'])
   else:
     form = ProcessedDataForm(request.form)
     if form.validate():
-      proc_data[session['exp_name']+'_'+cond_num_global] = [cond_name_global,
+      proc_data[session['exp_name']+'_'+session['cond_num']] = [session['cond_name'],
         form.data['exp_temp'], form.data['pyl_hz'],
         form.data['pyl_cycvar'], form.data['pyl_niqr'], form.data['gas_hz'],
         form.data['gas_cycvar'], form.data['gas_niqr'], form.data['pd_off'],
@@ -912,13 +899,12 @@ def processed_data():
         json.dump(proc_data, outfile)
       return redirect(url_for('experiment_page'))
     else:
-      return render_template('processed-data.html', form=form, name=session['exp_name'], cond=cond_name_global)
+      return render_template('processed-data.html', form=form, name=session['exp_name'], cond=session['cond_name'])
 
 
 @app.route('/new-user', methods=['GET', 'POST'])
 def new_user():
   # Create new user
-  global editusername_global
   if config['NewUsersAllowed'] != 1:
     return render_template('feature-disabled.html')
   if request.method == 'GET':
@@ -943,7 +929,7 @@ def new_user():
       with open('databases/user_pdatabase.json', 'w') as outfile:
         json.dump(user_pdatabase, outfile)
       user = load_user(form.data['username'])
-      editusername_global = form.data['username']
+      session['editusername'] = form.data['username']
       flask.ext.login.login_user(user)
       return redirect(url_for('index'))
     else:     
@@ -953,47 +939,45 @@ def new_user():
 @app.route('/edit-user', methods=['GET', 'POST'])
 @login_required
 def edit_user():
-  global editusername_global
   if request.method == 'GET':
     # get old user information, then come back as a post
-    form = EditUserForm(surname=user_database[editusername_global][1], \
-      email=user_database[editusername_global][0], \
-      lab=user_database[editusername_global][2])
-    return render_template('edit-user.html', form=form, name=editusername_global)
+    form = EditUserForm(surname=user_database[session['editusername']][1], \
+      email=user_database[session['editusername']][0], \
+      lab=user_database[session['editusername']][2])
+    return render_template('edit-user.html', form=form, name=session['editusername'])
   else:
     # re-save the user with validated user information
     form = EditUserForm(request.form)
     if form.validate():
-      user_database[editusername_global] = \
+      user_database[session['editusername']] = \
         [form.data['email'], form.data['surname'],
         form.data['lab']]
       with open('databases/user_database.json', 'w') as outfile:
         json.dump(user_database, outfile)
       return redirect(url_for('index'))
     else:
-      return render_template('edit-user.html', form=form, name=editusername_global)
+      return render_template('edit-user.html', form=form, name=session['editusername'])
 
 
 @app.route('/password-change', methods=['GET', 'POST'])
 @login_required
 def password_change():
-  global editusername_global
   if request.method == 'GET':
     # get new password, then come back as a post
     form = PasswordChangeForm()
-    return render_template('password-change.html', form=form, msg=editusername_global+' password change')
+    return render_template('password-change.html', form=form, msg=session['editusername']+' password change')
   else:
     # re-save the user's hashed new password with validated user information
     form = PasswordChangeForm(request.form)
     if hashlib.sha256(form.data['oldpassword']).hexdigest() \
-        != user_pdatabase[editusername_global]:
+        != user_pdatabase[session['editusername']]:
       return render_template('password-change.html', form=form,
-        msg='Wrong password for '+editusername_global)
+        msg='Wrong password for '+session['editusername'])
     if not form.validate():
       return render_template('password-change.html', form=form,
-        msg=editusername_global+' password change')           
+        msg=session['editusername']+' password change')           
     else:
-      user_pdatabase[editusername_global] = \
+      user_pdatabase[session['editusername']] = \
         (hashlib.sha256(form.data['password']).hexdigest())
       with open('databases/user_pdatabase.json', 'w') as outfile:
         json.dump(user_pdatabase, outfile)  
@@ -1004,7 +988,6 @@ def password_change():
 @login_required
 def admin_page():
   # Manages administrator control over users, including deletion and upload activation
-  global editusername_global
   if g.user.id != "Admin":
     return redirect(url_for('index'))
   if request.method == "GET":
@@ -1038,11 +1021,11 @@ def admin_page():
         msg = 'User ' + form.data['username'] + ' deleted.'
       return render_template('admin-message.html', msg=msg)
     if form.data['action'] == 'edit':
-      editusername_global = form.data['username']
-      form = EditUserForm(surname=user_database[editusername_global][1], \
-        email=user_database[editusername_global][0], \
-        lab=user_database[editusername_global][2])
-      return render_template('edit-user.html', form=form, name=editusername_global)
+      session['editusername'] = form.data['username']
+      form = EditUserForm(surname=user_database[session['editusername']][1], \
+        email=user_database[session['editusername']][0], \
+        lab=user_database[session['editusername']][2])
+      return render_template('edit-user.html', form=form, name=session['editusername'])
     if form.data['action'] == 'password':
       new_random_password = ''.join(
         random.choice(string.ascii_letters + string.digits) for _ in range(8))
