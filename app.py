@@ -46,13 +46,13 @@ global intra_neurons_global
 global experiment_flags_global
 
 extra_nerves_global = ['lvn', 'pdn', 'pyn', 'lpn', 'mvn', 'dgn', 'lgn', 'aln',
-            'stn', 'son', 'ion', 'dpon']
+            'stn', 'dvn', 'son', 'ion', 'dpon']
 
 intra_neurons_global = ['PD', 'LP', 'PY', 'VD', 'IC', 'Int1', 'LG', 'DG', 'GM', 'MG',
             'H', 'AGR', 'AB', 'CoG', 'OeG', 'MCN1', 'MCN5']
 
 experiment_flags_global = ['VoltageClamp', 'TempRamp', 'IsolatedNeurons', 'DynamicClamp',
-              'Decentralization', 'Neuromodulation', 'Immuno', 'Published']
+              'Decentralization', 'Neuromodulation', 'Immuno', 'Published', 'LongTerm']
 
 
 app.logger.addHandler(logging.StreamHandler(sys.stdout))
